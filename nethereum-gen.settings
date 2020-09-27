@@ -1,0 +1,7 @@
+{
+    "projectName": "AUDTTokenContract_Drop",
+    "namespace": "AUDTTokenContract_Drop.Contracts",
+    "lang": 0,
+    "autoCodeGen": true,
+    "projectPath": "../"
+}
