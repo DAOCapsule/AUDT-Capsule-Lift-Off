@@ -24,12 +24,12 @@ contract Token is
     uint256 public constant INITIAL_SUPPLY = 250000000 * (10**uint256(DECIMALS));
     address public migrationAgent;
     uint256 public totalMigrated;
-    address public mintAgent;
-
-
+    
     event Migrate(address indexed from, address indexed to, uint256 value);
-    event MintAgentSet(address indexed mintAgent);
     event MigrationAgentSet(address indexed migrationAgent);
+    event LogControllerSet(address indexed controller);
+    event LogControllerRevoked(address indexed controller);
+
 
 
     /// @dev prevent accidental sending of tokens to this token contract
@@ -45,7 +45,20 @@ contract Token is
     /// @dev Constructor that gives msg.sender all of existing tokens and initiates token.
     constructor() public ERC20("Auditchain", "AUDT") {
         _mint(msg.sender, INITIAL_SUPPLY);      
-        _setupRole(CONTROLLER_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function setController(address _controller)  public  {
+        require(_controller != address(0), "Token:setController - Controller address can't be 0"); 
+        grantRole(CONTROLLER_ROLE, _controller);
+        emit LogControllerSet(_controller);
+    }
+
+    function revokeController(address _controller) public  {
+        require(_controller != address(0), "Token:revokeController - Controller address can't be 0"); 
+        revokeRole(CONTROLLER_ROLE, _controller);
+        LogControllerRevoked(_controller);
+
     }
 
     /// @dev Function to mint tokens once per year
@@ -54,7 +67,7 @@ contract Token is
     /// @return A boolean that indicates if the operation was successful.
     function mint(address to, uint256 amount) public isController() returns (bool) {       
         require(to != address(0), "Token:mint - Recipient address can't be 0");        
-        _mint(mintAgent, amount);
+        _mint(to, amount);
         return true;
     }
 
