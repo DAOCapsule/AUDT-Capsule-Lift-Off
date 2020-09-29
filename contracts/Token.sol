@@ -5,44 +5,32 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-//import "../node_modules/openzeppelin-contracts/contracts/access/roles/MinterRole.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./MigrationAgent.sol";
 import "./Locked.sol";
 
 /**
  * @title Token
- * @dev Burnable, Mintabble, Ownable, Pausable, with Locking ability per user.
+ * @dev Burnable, Mintable, Ownable, Pausable, with Locking ability per user.
  */
 contract Token is
     Pausable,
     ERC20,
     Ownable,
     ERC20Burnable,
-    Locked,
-    AccessControl
+    Locked
+
 {
     uint8 public constant DECIMALS = 18;
-    uint256 public constant INITIAL_SUPPLY = 250000000 *
-        (10**uint256(DECIMALS));
-    uint256 public constant ONE_YEAR_SUPPLY = 12500000 *
-        (10**uint256(DECIMALS));
+    uint256 public constant INITIAL_SUPPLY = 250000000 * (10**uint256(DECIMALS));
     address public migrationAgent;
     uint256 public totalMigrated;
     address public mintAgent;
 
-    uint16 constant ORIGIN_YEAR = 1970;
-    uint256 constant YEAR_IN_SECONDS = 31557159; //average of seconds in 4 years including one leap year
-    //giving approximate length of year without using precise calender
-
-    mapping(uint256 => bool) public mintedYears;
 
     event Migrate(address indexed from, address indexed to, uint256 value);
     event MintAgentSet(address indexed mintAgent);
     event MigrationAgentSet(address indexed migrationAgent);
 
-    // Create a new role identifier for the minter role
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /// @dev prevent accidental sending of tokens to this token contract
     /// @param _self - address of this contract
@@ -56,48 +44,25 @@ contract Token is
 
     /// @dev Constructor that gives msg.sender all of existing tokens and initiates token.
     constructor() public ERC20("Auditchain", "AUDT") {
-        _mint(msg.sender, INITIAL_SUPPLY + ONE_YEAR_SUPPLY);
-        mintedYears[returnYear()] = true;
-        _setupRole(MINTER_ROLE, msg.sender);
-    }
-
-    /// @dev Function to determine year based on the current time
-    /// There is no need to deal with leap years as only once per year mining can be run and
-    /// one day is meaningless
-    function returnYear() internal view returns (uint256) {
-        uint256 year = ORIGIN_YEAR + (block.timestamp / YEAR_IN_SECONDS);
-        return year;
+        _mint(msg.sender, INITIAL_SUPPLY);      
+        _setupRole(CONTROLLER_ROLE, msg.sender);
     }
 
     /// @dev Function to mint tokens once per year
+    /// @param to address to which new minted tokens are sent
+    /// @param amount of tokens to send 
     /// @return A boolean that indicates if the operation was successful.
-    function mint() public returns (bool) {
-        require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
-        require(mintAgent != address(0), "Mint agent address can't be 0");
-        require(
-            !mintedYears[returnYear()],
-            "Tokens have been already minted for this year."
-        );
-
-        _mint(mintAgent, ONE_YEAR_SUPPLY);
-        mintedYears[returnYear()] = true;
-
+    function mint(address to, uint256 amount) public isController() returns (bool) {       
+        require(to != address(0), "Token:mint - Recipient address can't be 0");        
+        _mint(mintAgent, amount);
         return true;
-    }
-
-    /// @notice Set contract to which yearly tokens will be minted
-    /// @param _mintAgent - address of the contract to set
-    function setMintContract(address _mintAgent) external onlyOwner() {
-        require(_mintAgent != address(0), "Mint agent address can't be 0");
-        mintAgent = _mintAgent;
-        emit MintAgentSet(_mintAgent);
     }
 
     /// @notice Migrate tokens to the new token contract.
     function migrate() external whenNotPaused() {
         uint256 value = balanceOf(msg.sender);
-        require(migrationAgent != address(0), "Enter migration agent address");
-        require(value > 0, "Amount of tokens is required");
+        require(migrationAgent != address(0), "Token:migrate - Enter migration agent address");
+        require(value > 0, "Token:migrate - Amount of tokens is required");
 
         _addLock(msg.sender);
         burn(balanceOf(msg.sender));
@@ -110,7 +75,7 @@ contract Token is
     /// @notice Set address of migration target contract and enable migration process
     /// @param _agent The address of the MigrationAgent contract
     function setMigrationAgent(address _agent) external onlyOwner() {
-        require(_agent != address(0), "Migration agent can't be 0");
+        require(_agent != address(0), "Token:setMigrationAgent - Migration agent can't be 0");
         migrationAgent = _agent;
         emit MigrationAgentSet(_agent);
     }
@@ -168,12 +133,11 @@ contract Token is
         return super.decreaseAllowance(spender, subtractedValue);
     }
 
-    function pause() public onlyOwner()   {
-
-         super._pause();
+    function pause() public isController()  {       
+        super._pause();
     }
 
-    function unpause() public onlyOwner()  {
+    function unpause() public  isController() {        
         super._unpause();
     }
 }

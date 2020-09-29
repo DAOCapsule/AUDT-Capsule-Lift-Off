@@ -3,15 +3,25 @@ pragma solidity ^0.6.6;
 
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @title Locked
 /// @dev Smart contract to enable locking and unlocking of token holders. 
-contract Locked is Ownable {
+contract Locked is Ownable, AccessControl {
 
     mapping (address => bool) public lockedList;
 
     event AddedLock(address user);
     event RemovedLock(address user);
+
+    // Create a new role identifier for the controller role
+    bytes32 public constant CONTROLLER_ROLE = keccak256("CONTROLLER_ROLE");
+
+       modifier isController {
+            require(hasRole(CONTROLLER_ROLE, msg.sender), "Caller is not a controller");
+
+        _;
+    }
 
 
     /// @dev terminate transaction if any of the participants is locked
@@ -35,13 +45,21 @@ contract Locked is Ownable {
     
     /// @dev add user to lock
     /// @param _user to lock
-    function addLock (address _user) public onlyOwner {
+    function addLock (address _user) public  isController() {        
         _addLock(_user);
+    }
+
+    function addLockMultiple(address[] memory _users) public isController() {
+        uint256 length = _users.length;
+        require(length <= 256, "Locked-addLockMultiple: List too long");
+        for (uint256 i = 0; i < length; i++) {
+            _addLock(_users[i]);
+        }
     }
 
     /// @dev unlock user
     /// @param _user - user to unlock
-    function removeLock (address _user) public onlyOwner {
+    function removeLock (address _user) isController() public {       
         _removeLock(_user);
     }
 
