@@ -48,8 +48,8 @@ contract StakingToken is
      * @return boolean value true if action was successful 
      */
     function burn(address user, uint amount) public returns (bool) {
-        require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
-        require(user != address(0), "Recipient address can't be 0");       
+        require(hasRole(MINTER_ROLE, msg.sender), "StakingToken:burn - Caller is not a minter");
+        require(user != address(0), "StakingToken:burn - Recipient address can't be 0");       
         _burn(user, amount);        
         return true;
     }

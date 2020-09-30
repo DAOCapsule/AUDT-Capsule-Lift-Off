@@ -48,12 +48,16 @@ contract Token is
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    /// @dev grant role of controller to provided address, minting, pausing, locking
+    /// @param _controller - address of the entity for which role is granted
     function setController(address _controller)  public  {
         require(_controller != address(0), "Token:setController - Controller address can't be 0"); 
         grantRole(CONTROLLER_ROLE, _controller);
         emit LogControllerSet(_controller);
     }
 
+    /// @dev revoke role of controller to provided address, minting, pausing, locking
+    /// @param _controller - address of the entity for which role is revoked
     function revokeController(address _controller) public  {
         require(_controller != address(0), "Token:revokeController - Controller address can't be 0"); 
         revokeRole(CONTROLLER_ROLE, _controller);

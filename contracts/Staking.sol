@@ -61,15 +61,6 @@ contract Staking is Ownable {
     event LogBlacklisted(address indexed to);
 
     /**
-    * @dev ensures that funding period is still in effect
-    */
-
-    modifier fundingPeriod {
-
-        _;
-    }
-
-    /**
      * @dev Sets the below variables 
      * @param _auditTokenAddress - address of the AUDT token
      * @param _stakingDateStart - date staking starts
@@ -135,10 +126,10 @@ contract Staking is Ownable {
      * @param amount number of AUDT tokens sent to contract for staking     
      */
 
-    function stake(uint256 amount) fundingPeriod() public {
+    function stake(uint256 amount) public {
 
         require(amount >= 100e18, "Staking:stake - Minimum contribution amount is 100 AUDT tokens");
-        require(stakingDateStart >= block.number, "Staking:stake - deposit period ended. ");
+        require(stakingDateStart >= block.number, "Staking:stake - deposit period ended. ");      
         require(blacklistedAddress[msg.sender] == false, "This address has been blacklisted");
         stakedAmount += amount;  // track tokens contributed so far
         _receiveDeposit(amount);

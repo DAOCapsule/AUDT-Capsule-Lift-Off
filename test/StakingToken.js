@@ -357,8 +357,8 @@ contract("Staking Token", (accounts) => {
 
             let numberToCompare = BigNumber(balance.toString()).minus(allowedAmount.toString()).toString()
             // assert.equal(balance, transferFunds);
-            await token.burn(allowedAmount, {
-                from: holder1
+            await token.burn(holder1, allowedAmount, {
+                from: stakingContract
             });
 
             balance = await token.balanceOf(holder1);
@@ -368,8 +368,8 @@ contract("Staking Token", (accounts) => {
         it('burn: Burn 1000 tokens in owner account should fail. No tokens available', async () => {          
 
             try {
-                await token.burn(transferFunds, {
-                    from: owner
+                await token.burn(owner, transferFunds, {
+                    from: stakingContract
                 });
             } catch (error) {
                 ensureException(error);
@@ -378,56 +378,57 @@ contract("Staking Token", (accounts) => {
 
     })
 
-    describe("burnFrom", async () => {
+    // describe("burnFrom", async () => {
 
-        it('burnFrom: Burn 1000 tokens by holder2 in holder1 account successfully', async () => {         
+    //     it('burnFrom: Burn 1000 tokens by holder2 in holder1 account successfully', async () => {         
                         
-            let balance = await token.balanceOf(holder1);
+    //         let balance = await token.balanceOf(holder1);
 
-            let numberToCompare = BigNumber(balance.toString()).minus(allowedAmount.toString()).toString()
+    //         let numberToCompare = BigNumber(balance.toString()).minus(allowedAmount.toString()).toString()
                       
-            await token.approve(holder2, allowedAmount, {
-                from: holder1
-            });
+    //         await token.approve(holder2, allowedAmount, {
+    //             from: holder1
+    //         });
 
-            await token.burnFrom(holder1, allowedAmount, {
-                from: holder2
-            });
+    //         await token.burnFrom(holder1, allowedAmount, {
+    //             from: holder2
+    //         });
 
-            balance = await token.balanceOf(holder1);
+    //         balance = await token.balanceOf(holder1);
            
-            assert.equal(balance.toString(), numberToCompare);
+    //         assert.equal(balance.toString(), numberToCompare);
 
-        })
+    //     })
 
-        it('burnFrom: Burn 1000 tokens by holder2 in holder1 account should fail', async () => {
+    //     it('burnFrom: Burn 1000 tokens by holder2 in holder1 account should fail', async () => {
          
           
 
-            try {
-                await token.burnFrom(holder1, transferFunds, {
-                    from: holder2
-                });
-            } catch (error) {
-                ensureException(error);
-            }
+    //         try {
+    //             await token.burnFrom(holder1, transferFunds, {
+    //                 from: holder2
+    //             });
+    //         } catch (error) {
+    //             ensureException(error);
+    //         }
 
-        })
+    //     })
 
-        it('burnFrom: Burn 1001 tokens by holder1 in owner account should fail', async () => {
+    //     it('burnFrom: Burn 1001 tokens by holder1 in owner account should fail', async () => {
            
 
-            await token.approve(holder2, transferFunds, {
-                from: holder1
-            });
-            try {
-                await token.burnFrom(holder1, transferFunds + 1, {
-                    from: holder2
-                });
-            } catch (error) {
-                ensureException(error);
-            }
-        })
+    //         await token.approve(holder2, transferFunds, {
+    //             from: holder1
+    //         });
+    //         try {
+    //             await token.burnFrom(holder1, transferFunds + 1, {
+    //                 from: holder2
+    //             });
+    //         } catch (error) {
+    //             ensureException(error);
+    //         }
+    //     })
+    // })
 
 
         describe('events', async () => {
@@ -486,8 +487,8 @@ contract("Staking Token", (accounts) => {
     
             it('should log Transfer event after burn()', async () => {
                
-                let result = await token.burn(transferFunds, {
-                    from: holder1
+                let result = await token.burn(holder1, transferFunds, {
+                    from: stakingContract
                 });
     
                 assert.lengthOf(result.logs, 1);
@@ -498,30 +499,30 @@ contract("Staking Token", (accounts) => {
                 assert.equal(Number(event.args.value), transferFunds);
             });
     
-            it('should log Transfer and Approve event after burnFrom()', async () => {           
+            // it('should log Transfer and Approve event after burnFrom()', async () => {           
     
-                await token.approve(holder2, allowedAmount, {
-                    from: holder1
-                });
+            //     await token.approve(holder2, allowedAmount, {
+            //         from: holder1
+            //     });
     
-                let value = allowedAmount / 2;
-                let result = await token.burnFrom(holder1, value, {
-                    from: holder2
-                });
+            //     let value = allowedAmount / 2;
+            //     let result = await token.burnFrom(holder1, value, {
+            //         from: holder2
+            //     });
     
-                assert.lengthOf(result.logs, 2);
+            //     assert.lengthOf(result.logs, 2);
     
-                let event1 = result.logs[1];
-                assert.equal(event1.event, 'Transfer');
-                assert.equal(event1.args.from, holder1);
-                assert.equal(event1.args.to, "0x0000000000000000000000000000000000000000");
-                assert.equal(Number(event1.args.value), value);
-                let event2 = result.logs[0];
-                assert.equal(event2.event, 'Approval');
-                assert.equal(event2.args.owner, holder1);
-                assert.equal(event2.args.spender, holder2);
-                assert.equal(Number(event2.args.value), allowedAmount - value);
-            });
+            //     let event1 = result.logs[1];
+            //     assert.equal(event1.event, 'Transfer');
+            //     assert.equal(event1.args.from, holder1);
+            //     assert.equal(event1.args.to, "0x0000000000000000000000000000000000000000");
+            //     assert.equal(Number(event1.args.value), value);
+            //     let event2 = result.logs[0];
+            //     assert.equal(event2.event, 'Approval');
+            //     assert.equal(event2.args.owner, holder1);
+            //     assert.equal(event2.args.spender, holder2);
+            //     assert.equal(Number(event2.args.value), allowedAmount - value);
+            // });
     
     
             it('should log Transfer after mint()', async () => {
@@ -555,6 +556,6 @@ contract("Staking Token", (accounts) => {
             })
         });
 
-    })
+   
     
 })
