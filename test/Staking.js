@@ -120,7 +120,7 @@ contract("Staking Token", (accounts) => {
             }
         })
 
-        it("It should return earning ratio of 2", async () => {
+        it("It should return earning ratio of 3", async () => {
 
             await token.increaseAllowance(staking.address, doubleTokensToDeposit, { from: owner });
             await staking.fundStaking(doubleTokensToDeposit, { from: owner });
@@ -133,7 +133,7 @@ contract("Staking Token", (accounts) => {
                 .returnEarningRatio
                 .call();
 
-            assert.strictEqual(stakingRatio.toString(), new BigNumber(2e18).toString() );
+            assert.strictEqual(stakingRatio.toString(), new BigNumber(3e18).toString() );
         })
 
         it("It should fail transferring less than 100 AUDT tokens", async () => { 

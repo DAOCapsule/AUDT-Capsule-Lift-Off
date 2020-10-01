@@ -96,7 +96,7 @@ contract Staking is Ownable {
      */
     function returnEarningRatio() public view returns (uint256) {
 
-        return (totalReward.mul(1e18) / stakedAmount) ;
+        return (totalReward.mul(1e18) / stakedAmount) + 1e18 ;
     }
 
     /**
@@ -194,10 +194,8 @@ contract Staking is Ownable {
      */
     function _deliverRewards(uint256 amount) internal {
 
-        uint256 reward;
         uint256 totalRedeemed;
-        reward = (amount * returnEarningRatio()).div(1e18);
-        totalRedeemed = reward.add(amount);
+        totalRedeemed = (amount * returnEarningRatio()).div(1e18);
         released[msg.sender] = released[msg.sender].add(totalRedeemed);
         totalReleased += totalRedeemed;
         _auditToken.transfer(msg.sender, totalRedeemed);
