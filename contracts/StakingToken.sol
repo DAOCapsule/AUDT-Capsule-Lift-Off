@@ -23,7 +23,7 @@ contract StakingToken is
      * @dev Sets the minter which is the Staking contract. 
      * @param minter - address of the minter 
      */
-    constructor(address minter) public ERC20("1-st AUDT Staking", "AUDT-STK-1") {     
+    constructor(address minter, string memory tokenSymbol, string memory tokenName) public ERC20(tokenName, tokenSymbol) {     
         _setupRole(MINTER_ROLE, minter);
     }
 

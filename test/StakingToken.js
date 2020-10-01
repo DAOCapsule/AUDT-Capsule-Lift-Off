@@ -36,6 +36,8 @@ contract("Staking Token", (accounts) => {
     let mintedTokens = new BigNumber(1000).mult(1e18);   
     let token;
     let stakingContract;
+    let stakingTokenSymbol =  "AUDT-STK-1";
+    let stakingTokenName = "1-st AUDT Staking";
 
     before(async () => {
         owner = accounts[0];
@@ -49,7 +51,7 @@ contract("Staking Token", (accounts) => {
 
     beforeEach(async () => {
 
-        token = await TOKEN.new(stakingContract);
+        token = await TOKEN.new(stakingContract, stakingTokenSymbol, stakingTokenName);
         await token.mint(holder1, transferFunds, {from: stakingContract});
         // await token.transfer(holder1, transferFunds, {
         //     from: owner
@@ -78,7 +80,7 @@ contract("Staking Token", (accounts) => {
 
         it('mint: should mint 1000 staking tokens in holder1 account', async () => {    
             
-            token = await TOKEN.new(stakingContract);
+            token = await TOKEN.new(stakingContract, stakingTokenSymbol, stakingTokenName);
 
             await token.mint(holder1, mintedTokens, {from: stakingContract});          
             let balance = await token
@@ -234,7 +236,7 @@ contract("Staking Token", (accounts) => {
         });
 
         it('Approve max (2^256 - 1)', async () => {
-            let token = await TOKEN.new(stakingContract);
+            token = await TOKEN.new(stakingContract, stakingTokenSymbol, stakingTokenName);
             await token.approve(holder1, '115792089237316195423570985008687907853269984665640564039457584007913129639935', {
                 from: holder2
             });

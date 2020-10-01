@@ -66,11 +66,12 @@ contract Staking is Ownable {
      * @param _stakingDateStart - date staking starts
      * @param _stakingDateEnd - date staking ends
      */
-    constructor(IERC20 _auditTokenAddress, uint256 _stakingDateStart, uint256 _stakingDateEnd) public {
+    constructor(IERC20 _auditTokenAddress, uint256 _stakingDateStart, uint256 _stakingDateEnd, uint256 _totalReward) public {
 
         _auditToken = _auditTokenAddress;
         stakingDateStart = _stakingDateStart;
         stakingDateEnd = _stakingDateEnd;
+        totalReward =  _totalReward;
 
     }
 
@@ -104,8 +105,10 @@ contract Staking is Ownable {
      */
     function fundStaking(uint256 amount) public onlyOwner(){
 
+        require(amount == totalReward, "Staking:fundStaking - The amount of tokens sent doesn't match amount declared:");
+
         _auditToken.safeTransferFrom(msg.sender, address(this), amount);
-        totalReward += amount;
+        // totalReward += amount;
         emit LogDepositReceived(msg.sender, amount);
     }
 
@@ -139,7 +142,7 @@ contract Staking is Ownable {
     
 
     /**
-     * @dev Function to receive and process deposits from stake() function
+     * @dev Function to receive and process deposits called from stake() function
      * @param amount number of tokens deposited
      */
     function _receiveDeposit(uint amount) internal  {      
@@ -160,8 +163,9 @@ contract Staking is Ownable {
     }
   
      /**
-     * @dev Function to redeem contribution. Based on the staking period function may send rewards
-     * if user redeems after staking ended. If staking is still in progress, user only receives amount contributed
+     * @dev Function to redeem contribution. Based on the staking period function may send rewards or just deposit. 
+     * If user redeems after staking ended reward will be added to deposit. If staking is still in progress, 
+     * user only receives amount contributed.
      * @param amount number of tokens being redeemed
      */
     function redeem(uint256 amount) public {
