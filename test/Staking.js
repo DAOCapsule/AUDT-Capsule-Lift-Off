@@ -3,6 +3,7 @@ const util = require('util')
 const STAKINGTOKEN = artifacts.require('../StakingToken');
 const TOKEN = artifacts.require('../Token');
 const STAKING = artifacts.require('../Staking.sol');
+const GOVERNANCETOKEN = artifacts.require('../GovernanceToken.sol');
 
 
 
@@ -36,9 +37,11 @@ contract("Staking Token", (accounts) => {
     let stakingContract;
     let staking;
     let stakingToken;
+    let governanceToken;
     let transaction;
     let stakingTokenSymbol = "AUDT-STK-1";
     let stakingTokenName = "1-st AUDT Staking";
+    let governanceTokenRewardRatio = new BigNumber(100000000000000000);
 
     before(async () => {
         owner = accounts[0];
@@ -56,7 +59,8 @@ contract("Staking Token", (accounts) => {
         let blockNumber = await web3.eth.getBlockNumber();
 
         token = await TOKEN.new();
-        staking = await STAKING.new(token.address, blockNumber + 100, blockNumber + 200, totalReward);
+        governanceToken = await GOVERNANCETOKEN.new();
+        staking = await STAKING.new(token.address, governanceToken.address, blockNumber + 100, blockNumber + 200, totalReward, governanceTokenRewardRatio);
         stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
         await staking.updateStakingTokenAddress(stakingToken.address);
 
@@ -109,7 +113,7 @@ contract("Staking Token", (accounts) => {
         it("It should fail contribution of AUDT tokens from holder1 for staking due to deposit period expired", async () => {
 
             let blockNumber = await web3.eth.getBlockNumber();
-            staking = await STAKING.new(token.address, blockNumber - 1, blockNumber + 100, totalReward);
+            staking = await STAKING.new(token.address, governanceToken.address, blockNumber - 1, blockNumber + 100, totalReward, governanceTokenRewardRatio);
             await token.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 });
 
             try {
@@ -189,7 +193,7 @@ contract("Staking Token", (accounts) => {
         it("It should fail redeeming tokens when user provides as input more tokens than deposited ", async () => {
 
             let blockNumber = await web3.eth.getBlockNumber();
-            staking = await STAKING.new(token.address, blockNumber + 7, blockNumber + 8, totalReward);
+            staking = await STAKING.new(token.address, governanceToken.address, blockNumber + 7, blockNumber + 8, totalReward, governanceTokenRewardRatio);
             stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
             await staking.updateStakingTokenAddress(stakingToken.address);
 
@@ -211,7 +215,7 @@ contract("Staking Token", (accounts) => {
         it("It should redeem 3000 AUDT tokens to holder1 who redeemed after staking ended. 2000 AUDT reward and 1000 AUDT original deposit", async () => {
 
             let blockNumber = await web3.eth.getBlockNumber();
-            staking = await STAKING.new(token.address, blockNumber + 7, blockNumber + 8, totalReward);
+            staking = await STAKING.new(token.address,governanceToken.address, blockNumber + 7, blockNumber + 8, totalReward, governanceTokenRewardRatio);
             stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
             await staking.updateStakingTokenAddress(stakingToken.address);
 
@@ -225,7 +229,9 @@ contract("Staking Token", (accounts) => {
 
             // console.log("staking balance:" + await stakingToken.balanceOf(holder1));
 
-            await stakingToken.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 })
+            await stakingToken.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 });
+            await governanceToken.setController(staking.address);
+
             await staking.redeem(tokensToDeposit, { from: holder1 });
 
             let balanceAfterStaking = await token
@@ -238,7 +244,7 @@ contract("Staking Token", (accounts) => {
         it("It should redeem 1000 AUDT tokens to holder1. Redeeming has been done before staking ended, so no reward", async () => {
 
             let blockNumber = await web3.eth.getBlockNumber();
-            staking = await STAKING.new(token.address, blockNumber + 7, blockNumber + 100, totalReward);
+            staking = await STAKING.new(token.address, governanceToken.address, blockNumber + 7, blockNumber + 100, totalReward, governanceTokenRewardRatio);
             stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
             await staking.updateStakingTokenAddress(stakingToken.address);
 
@@ -308,7 +314,7 @@ contract("Staking Token", (accounts) => {
         it("It should redeem 1666666666666666666000 AUDT tokens to holder1 and 3333333333333333332000 AUDT tokens to holder2", async () => {
 
             let blockNumber = await web3.eth.getBlockNumber();
-            staking = await STAKING.new(token.address, blockNumber + 10, blockNumber + 11, totalReward);
+            staking = await STAKING.new(token.address,governanceToken.address, blockNumber + 10, blockNumber + 11, totalReward, governanceTokenRewardRatio);
             stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
             await staking.updateStakingTokenAddress(stakingToken.address);
 
@@ -334,7 +340,9 @@ contract("Staking Token", (accounts) => {
             // console.log('staking token balance before redeem:' + await stakingToken.totalSupply());
 
             await stakingToken.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 });
-            await stakingToken.increaseAllowance(staking.address, doubleTokensToDeposit, { from: holder2 })
+            await stakingToken.increaseAllowance(staking.address, doubleTokensToDeposit, { from: holder2 });
+            await governanceToken.setController(staking.address);
+
 
             await staking.redeem(tokensToDeposit, { from: holder1 });
             await staking.redeem(doubleTokensToDeposit, { from: holder2 });
@@ -387,6 +395,69 @@ contract("Staking Token", (accounts) => {
             } catch (error) {
                 ensureException(error);
             }          
+        })
+    })
+
+    describe("GovernanceToken", async () => {
+
+        it("It should transfer 100 governance tokens to holder1", async () => {
+
+            let blockNumber = await web3.eth.getBlockNumber();
+            staking = await STAKING.new(token.address, governanceToken.address, blockNumber + 7, blockNumber + 8, totalReward, governanceTokenRewardRatio);
+            stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
+            await staking.updateStakingTokenAddress(stakingToken.address);
+
+
+            await token.increaseAllowance(staking.address, doubleTokensToDeposit, { from: owner });
+            await staking.fundStaking(doubleTokensToDeposit, { from: owner });
+
+            await token.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 });
+
+            await staking.stake(tokensToDeposit, { from: holder1 });
+
+            // console.log("staking balance:" + await stakingToken.balanceOf(holder1));
+
+            await stakingToken.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 })
+            await governanceToken.setController(staking.address);
+            await staking.redeem(tokensToDeposit, { from: holder1 });
+
+            
+            let balanceAfterStaking = await governanceToken
+            .balanceOf
+            .call(holder1)
+            assert.strictEqual(balanceAfterStaking.toString(), new BigNumber(tokensToDeposit).mult(governanceTokenRewardRatio).div(1e18).toString());
+            // console.log("governance tokens:" + balanceAfterStaking/1e18);
+            // console.log("tokens deposited:" + tokensToDeposit/1e18);
+        })
+
+        it("It should transfer 0 governance tokens to holder1 because staking is not over yet", async () => {
+
+            let blockNumber = await web3.eth.getBlockNumber();
+            staking = await STAKING.new(token.address, governanceToken.address, blockNumber + 7, blockNumber + 80, totalReward, governanceTokenRewardRatio);
+            stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
+            await staking.updateStakingTokenAddress(stakingToken.address);
+
+
+            await token.increaseAllowance(staking.address, doubleTokensToDeposit, { from: owner });
+            await staking.fundStaking(doubleTokensToDeposit, { from: owner });
+
+            await token.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 });
+
+            await staking.stake(tokensToDeposit, { from: holder1 });
+
+            // console.log("staking balance:" + await stakingToken.balanceOf(holder1));
+
+            await stakingToken.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 })
+            await governanceToken.setController(staking.address);
+            await staking.redeem(tokensToDeposit, { from: holder1 });
+
+            
+            let balanceAfterStaking = await governanceToken
+            .balanceOf
+            .call(holder1)
+            assert.strictEqual(balanceAfterStaking.toString(), "0");
+            // console.log("governance tokens:" + balanceAfterStaking/1e18);
+            // console.log("tokens deposited:" + tokensToDeposit/1e18);
         })
     })
 
