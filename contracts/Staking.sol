@@ -68,6 +68,10 @@ contract Staking is Ownable {
      */
     constructor(IERC20 _auditTokenAddress, uint256 _stakingDateStart, uint256 _stakingDateEnd, uint256 _totalReward) public {
 
+        require(_stakingDateEnd != 0, "Staking:constructor - Staking end date can't be 0" );
+        require(_stakingDateStart != 0, "Staking:constructor - Staking start date can't be 0" );
+        require(_auditTokenAddress != IERC20(0), "Audit token address can't be 0");
+
         _auditToken = _auditTokenAddress;
         stakingDateStart = _stakingDateStart;
         stakingDateEnd = _stakingDateEnd;
@@ -90,6 +94,20 @@ contract Staking is Ownable {
         
     }
 
+     /**
+     * @dev Function to manually update staking periods
+     * @param _stakingDateStart - start date of staking
+     * @param _stakingDateEnd - end date of staking    
+     */
+    function updateStakingPeriods(uint256 _stakingDateStart, uint256 _stakingDateEnd) public onlyOwner() {
+
+        require(_stakingDateEnd != 0, "Staking:constructor - Staking end date can't be 0" );
+        require(_stakingDateStart != 0, "Staking:constructor - Staking start date can't be 0" );
+        stakingDateStart = _stakingDateStart;
+        stakingDateEnd = _stakingDateEnd;
+
+    }
+
     /**
      * @dev Function to return earning ratio 
      * @return number representing earning ratio with precision of 18 decimal values       
@@ -97,6 +115,11 @@ contract Staking is Ownable {
     function returnEarningRatio() public view returns (uint256) {
 
         return (totalReward.mul(1e18) / stakedAmount) + 1e18 ;
+    }
+
+    function returnEarningsPerAmount(uint256 amount) public view returns(uint256) {
+
+        return (amount * returnEarningRatio()).div(1e18);
     }
 
     /**
@@ -194,12 +217,13 @@ contract Staking is Ownable {
      */
     function _deliverRewards(uint256 amount) internal {
 
-        uint256 totalRedeemed;
-        totalRedeemed = (amount * returnEarningRatio()).div(1e18);
-        released[msg.sender] = released[msg.sender].add(totalRedeemed);
-        totalReleased += totalRedeemed;
-        _auditToken.transfer(msg.sender, totalRedeemed);
-        LogRewardDelivered(msg.sender, totalRedeemed);
+        uint256 amountRedeemed;
+
+        amountRedeemed = returnEarningsPerAmount(amount);
+        released[msg.sender] = released[msg.sender].add(amountRedeemed);
+        totalReleased += amountRedeemed;
+        _auditToken.transfer(msg.sender, amountRedeemed);
+        LogRewardDelivered(msg.sender, amountRedeemed);
     }
 
      /**

@@ -6,6 +6,7 @@ const STAKING = artifacts.require('../Staking.sol');
 
 
 
+// import { assert } from 'console';
 import {
     ensureException,
     duration
@@ -36,7 +37,7 @@ contract("Staking Token", (accounts) => {
     let staking;
     let stakingToken;
     let transaction;
-    let stakingTokenSymbol =  "AUDT-STK-1";
+    let stakingTokenSymbol = "AUDT-STK-1";
     let stakingTokenName = "1-st AUDT Staking";
 
     before(async () => {
@@ -46,7 +47,7 @@ contract("Staking Token", (accounts) => {
         holder3 = accounts[3];
         holder4 = accounts[4];
         stakingContract = accounts[5];
-       
+
 
     });
 
@@ -55,7 +56,7 @@ contract("Staking Token", (accounts) => {
         let blockNumber = await web3.eth.getBlockNumber();
 
         token = await TOKEN.new();
-        staking = await STAKING.new(token.address, blockNumber + 100 , blockNumber + 200, totalReward );
+        staking = await STAKING.new(token.address, blockNumber + 100, blockNumber + 200, totalReward);
         stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
         await staking.updateStakingTokenAddress(stakingToken.address);
 
@@ -108,7 +109,7 @@ contract("Staking Token", (accounts) => {
         it("It should fail contribution of AUDT tokens from holder1 for staking due to deposit period expired", async () => {
 
             let blockNumber = await web3.eth.getBlockNumber();
-            staking = await STAKING.new(token.address, blockNumber - 1, blockNumber + 100, totalReward );
+            staking = await STAKING.new(token.address, blockNumber - 1, blockNumber + 100, totalReward);
             await token.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 });
 
             try {
@@ -133,10 +134,10 @@ contract("Staking Token", (accounts) => {
                 .returnEarningRatio
                 .call();
 
-            assert.strictEqual(stakingRatio.toString(), new BigNumber(3e18).toString() );
+            assert.strictEqual(stakingRatio.toString(), new BigNumber(3e18).toString());
         })
 
-        it("It should fail transferring less than 100 AUDT tokens", async () => { 
+        it("It should fail transferring less than 100 AUDT tokens", async () => {
 
             await token.increaseAllowance(staking.address, doubleTokensToDeposit, { from: owner });
             await staking.fundStaking(doubleTokensToDeposit, { from: owner });
@@ -153,7 +154,7 @@ contract("Staking Token", (accounts) => {
         })
 
 
-        it("It should fail accepting deposit from blacklisted address", async () => { 
+        it("It should fail accepting deposit from blacklisted address", async () => {
 
 
             // await token.increaseAllowance(staking.address, doubleTokensToDeposit, { from: owner });
@@ -162,13 +163,13 @@ contract("Staking Token", (accounts) => {
             transaction = await token.transfer(holder3, tokensToDeposit, {
                 from: owner
             })
-    
-            await staking.blacklistAddresses([holder3, holder4], {from:owner});
+
+            await staking.blacklistAddresses([holder3, holder4], { from: owner });
 
             await token.increaseAllowance(staking.address, tokensToDeposit, { from: holder3 });
 
 
-           try {
+            try {
 
                 await staking.stake(tokensToDeposit, { from: holder3 });
 
@@ -184,10 +185,33 @@ contract("Staking Token", (accounts) => {
 
     describe("Redeem", async () => {
 
+
+        it("It should fail redeeming tokens when user provides as input more tokens than deposited ", async () => {
+
+            let blockNumber = await web3.eth.getBlockNumber();
+            staking = await STAKING.new(token.address, blockNumber + 7, blockNumber + 8, totalReward);
+            stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
+            await staking.updateStakingTokenAddress(stakingToken.address);
+
+
+            await token.increaseAllowance(staking.address, doubleTokensToDeposit, { from: owner });
+            await staking.fundStaking(doubleTokensToDeposit, { from: owner });
+
+            await token.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 });
+
+            await staking.stake(tokensToDeposit, { from: holder1 });
+
+            try {
+                await staking.redeem(new BigNumber(tokensToDeposit).add(1) , { from: holder1 });
+           } catch (error) {
+                ensureException(error);
+           }   
+        })
+
         it("It should redeem 3000 AUDT tokens to holder1 who redeemed after staking ended. 2000 AUDT reward and 1000 AUDT original deposit", async () => {
 
             let blockNumber = await web3.eth.getBlockNumber();
-            staking = await STAKING.new(token.address, blockNumber + 7 , blockNumber + 8, totalReward);
+            staking = await STAKING.new(token.address, blockNumber + 7, blockNumber + 8, totalReward);
             stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
             await staking.updateStakingTokenAddress(stakingToken.address);
 
@@ -214,7 +238,7 @@ contract("Staking Token", (accounts) => {
         it("It should redeem 1000 AUDT tokens to holder1. Redeeming has been done before staking ended, so no reward", async () => {
 
             let blockNumber = await web3.eth.getBlockNumber();
-            staking = await STAKING.new(token.address, blockNumber + 7 , blockNumber + 100, totalReward );
+            staking = await STAKING.new(token.address, blockNumber + 7, blockNumber + 100, totalReward);
             stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
             await staking.updateStakingTokenAddress(stakingToken.address);
 
@@ -284,7 +308,7 @@ contract("Staking Token", (accounts) => {
         it("It should redeem 1666666666666666666000 AUDT tokens to holder1 and 3333333333333333332000 AUDT tokens to holder2", async () => {
 
             let blockNumber = await web3.eth.getBlockNumber();
-            staking = await STAKING.new(token.address, blockNumber + 10 , blockNumber + 11, totalReward );
+            staking = await STAKING.new(token.address, blockNumber + 10, blockNumber + 11, totalReward);
             stakingToken = await STAKINGTOKEN.new(staking.address, stakingTokenSymbol, stakingTokenName);
             await staking.updateStakingTokenAddress(stakingToken.address);
 
@@ -335,5 +359,35 @@ contract("Staking Token", (accounts) => {
 
 
     });
+
+    describe("updateStakingPeriods", async () => {
+
+        it("It should update staking period by the owner", async () => {
+
+            await staking.updateStakingPeriods(1, 2, {from:owner});
+            let startDate = await staking.stakingDateStart();
+            let endDate = await staking.stakingDateEnd();
+            assert.strictEqual(startDate.toNumber(), 1);
+            assert.strictEqual(endDate.toNumber(), 2);
+        })
+
+        it("It should fail updating staking period by holder1", async () => {
+
+           try {
+                await staking.updateStakingPeriods(1, 2, {from:holder1});
+           } catch (error) {
+                ensureException(error);
+           }          
+        })
+
+        it("It should fail updating staking period by passing argument 0", async () => {
+
+            try {
+                await staking.updateStakingPeriods(0, 2, {from:owner});
+            } catch (error) {
+                ensureException(error);
+            }          
+        })
+    })
 
 });
