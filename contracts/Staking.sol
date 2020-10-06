@@ -63,6 +63,9 @@ contract Staking is Ownable {
     ///@dev Emitted when address is entered into blacklist
     event LogBlacklisted(address indexed to);
 
+    ///@dev Emitted when unauthorized tokens are refunded
+    event LogUnauthorizedTokensReturn(address indexed to, address token, uint256 amount);
+
     /**
      * @dev Sets the below variables 
      * @param _auditTokenAddress - address of the AUDT token
@@ -120,6 +123,22 @@ contract Staking is Ownable {
         stakingDateStart = _stakingDateStart;
         stakingDateEnd = _stakingDateEnd;
 
+    }
+
+    /**
+     * @dev Function to manually return tokens which were send directly to the contract
+     * @param token - address of the token
+     * @param recipient - address of recipient
+     * @param amount - amount refunded   
+     */
+    function returnUnauthorizedTokens(address token, address recipient, uint256 amount) public onlyOwner() {
+       
+        // ensure that only extra tokens can be returned.
+        
+        if (address(token) == address(_auditToken))
+            require(_auditToken.balanceOf(address(this)).sub(amount)  >= totalReward.add(stakedAmount), "Staking:returnUnauthorizedtokens - You are refunding more than available. ");
+        IERC20(token).transfer(recipient, amount);
+        LogUnauthorizedTokensReturn(recipient, token, amount);
     }
 
     /**

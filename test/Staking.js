@@ -4,6 +4,8 @@ const STAKINGTOKEN = artifacts.require('../StakingToken');
 const TOKEN = artifacts.require('../Token');
 const STAKING = artifacts.require('../Staking.sol');
 const GOVERNANCETOKEN = artifacts.require('../GovernanceToken.sol');
+var Tx = require('ethereumjs-tx');
+
 
 
 
@@ -67,13 +69,8 @@ contract("Staking Token", (accounts) => {
         transaction = await token.transfer(holder1, tokensToDeposit, {
             from: owner
         })
-
-        // await stakingToken.mint(holder1, transferFunds, {from: stakingContract});
-        // await token.transfer(holder1, transferFunds, {
-        //     from: owner
-        // });
-
     })
+
 
 
 
@@ -398,6 +395,92 @@ contract("Staking Token", (accounts) => {
         })
     })
 
+    describe("returnUnauthorizedTokens", async () => {
+
+        it("It should fail to refund tokens to holder1 due to insufficient funds in the contract", async () => {
+
+
+            await token.increaseAllowance(staking.address, doubleTokensToDeposit, { from: owner });
+            await staking.fundStaking(doubleTokensToDeposit, { from: owner });
+
+
+            await token.increaseAllowance(staking.address, tokensToDeposit, { from: holder1 });
+
+            await staking.stake(tokensToDeposit, { from: holder1 });
+            
+            try {
+                let result = await staking.returnUnauthorizedTokens(token.address, holder1, tokensToDeposit, { from: owner });
+            }
+            catch (error) {
+                ensureException(error);
+            }
+        })
+
+        it("It should refund tokens to holder1", async () => {
+
+
+            await token.increaseAllowance(staking.address, doubleTokensToDeposit, { from: owner });
+            await staking.fundStaking(doubleTokensToDeposit, { from: owner });
+
+            transaction = await token.transfer(holder2, tokensToDeposit, {
+                from: owner
+            })
+
+            // transfer tokens not using directly the staking function. 
+            transaction = await token.transfer(staking.address, tokensToDeposit, {
+                from: holder1
+            })
+            await token.increaseAllowance(staking.address, tokensToDeposit, { from: holder2 });
+            
+            await staking.stake(tokensToDeposit, { from: holder2 });
+
+            let result = await staking.returnUnauthorizedTokens(token.address, holder1, tokensToDeposit, { from: owner });
+
+            let balanceAfterRefund = await token
+                .balanceOf
+                .call(holder1)
+            assert.strictEqual(balanceAfterRefund.toString(), tokensToDeposit.toString());
+
+            assert.lengthOf(result.logs, 1);
+
+            let event = result.logs[0];
+            assert.equal(event.event, 'LogUnauthorizedTokensReturn');
+            assert.strictEqual(event.args.amount.toString(), tokensToDeposit.toString());
+
+        })
+
+        it("It should fail to refund tokens to holder1 when refund is made by not authorized user", async () => {
+
+
+            await token.increaseAllowance(staking.address, doubleTokensToDeposit, { from: owner });
+            await staking.fundStaking(doubleTokensToDeposit, { from: owner });
+
+            transaction = await token.transfer(holder2, tokensToDeposit, {
+                from: owner
+            })
+
+            // transfer tokens not using directly the staking function. 
+            transaction = await token.transfer(staking.address, tokensToDeposit, {
+                from: holder1
+            })
+            await token.increaseAllowance(staking.address, tokensToDeposit, { from: holder2 });
+            
+            await staking.stake(tokensToDeposit, { from: holder2 });
+
+            // let result = await staking.returnUnauthorizedTokens(token.address, holder1, tokensToDeposit, { from: holder1 });
+
+           
+            try {
+                let result = await staking.returnUnauthorizedTokens(token.address, holder1, tokensToDeposit, { from: holder1});
+            }
+            catch (error) {
+                ensureException(error);
+            }
+        })
+
+    })
+
+
     describe("GovernanceToken", async () => {
 
         it("It should transfer 100 governance tokens to holder1", async () => {
@@ -421,10 +504,10 @@ contract("Staking Token", (accounts) => {
             await governanceToken.setController(staking.address);
             await staking.redeem(tokensToDeposit, { from: holder1 });
 
-            
+
             let balanceAfterStaking = await governanceToken
-            .balanceOf
-            .call(holder1)
+                .balanceOf
+                .call(holder1)
             assert.strictEqual(balanceAfterStaking.toString(), new BigNumber(tokensToDeposit).mult(governanceTokenRewardRatio).div(1e18).toString());
             // console.log("governance tokens:" + balanceAfterStaking/1e18);
             // console.log("tokens deposited:" + tokensToDeposit/1e18);
@@ -451,10 +534,10 @@ contract("Staking Token", (accounts) => {
             await governanceToken.setController(staking.address);
             await staking.redeem(tokensToDeposit, { from: holder1 });
 
-            
+
             let balanceAfterStaking = await governanceToken
-            .balanceOf
-            .call(holder1)
+                .balanceOf
+                .call(holder1)
             assert.strictEqual(balanceAfterStaking.toString(), "0");
             // console.log("governance tokens:" + balanceAfterStaking/1e18);
             // console.log("tokens deposited:" + tokensToDeposit/1e18);
