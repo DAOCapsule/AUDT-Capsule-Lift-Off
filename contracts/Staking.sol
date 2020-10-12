@@ -136,7 +136,7 @@ contract Staking is Ownable {
         // ensure that only extra tokens can be returned.
         
         if (address(token) == address(_auditToken))
-            require(_auditToken.balanceOf(address(this)).sub(amount)  >= totalReward.add(stakedAmount), "Staking:returnUnauthorizedtokens - You are refunding more than available. ");
+            require(_auditToken.balanceOf(address(this)).sub(amount)  >= totalReward.add(stakedAmount).sub(totalReleased), "Staking:returnUnauthorizedtokens - You are refunding more than available. ");
         IERC20(token).transfer(recipient, amount);
         LogUnauthorizedTokensReturn(recipient, token, amount);
     }
