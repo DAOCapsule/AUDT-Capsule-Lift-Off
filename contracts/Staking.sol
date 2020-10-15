@@ -46,13 +46,13 @@ contract Staking is Ownable {
 
     
     ///@dev Emitted when when staking token is issued
-    event Log_StakingTokensIssued(address indexed to, uint256 amount);
+    event LogStakingTokensIssued(address indexed to, uint256 amount);
 
     ///@dev Emitted when when deposit is received
     event LogDepositReceived(address indexed from, uint amount);
 
     ///@dev Emitted when staking tokens are returned
-    event Log_StakingTokenReturned(address indexed from, uint amount);
+    event LogStakingTokenReturned(address indexed from, uint amount);
 
     ///@dev Emitted when reward has been delivered
     event LogRewardDelivered(address indexed from, uint256 amount);
@@ -65,6 +65,9 @@ contract Staking is Ownable {
 
     ///@dev Emitted when unauthorized tokens are refunded
     event LogUnauthorizedTokensReturn(address indexed to, address token, uint256 amount);
+
+    ///@dev Emitted when redeem has complete
+    event LogTokensRedeemed(address indexed to, uint256 amount);
 
     /**
      * @dev Sets the below variables 
@@ -193,7 +196,7 @@ contract Staking is Ownable {
         stakedAmount += amount;  // track tokens contributed so far
         _receiveDeposit(amount);
         _deliverStakingTokens( amount);
-        emit Log_StakingTokensIssued(msg.sender, amount);
+        emit LogStakingTokensIssued(msg.sender, amount);
     }
     
 
@@ -237,6 +240,7 @@ contract Staking is Ownable {
             _deliverRewards(amount);        
         else
             _returnDeposit(amount);
+        emit LogTokensRedeemed(msg.sender, amount);
     }
 
      /**
@@ -246,7 +250,7 @@ contract Staking is Ownable {
     function _burnStakedToken(uint256 amount) internal {
 
         _stakingToken.burn(msg.sender, amount);
-        Log_StakingTokenReturned(msg.sender, amount);
+        LogStakingTokenReturned(msg.sender, amount);
     }
 
      /**
@@ -272,6 +276,7 @@ contract Staking is Ownable {
      */
     function _returnDeposit(uint256 amount) internal {
 
+        deposits[msg.sender] = deposits[msg.sender].sub(amount);
         cancelled[msg.sender] = released[msg.sender].add(amount);
         stakedAmount = stakedAmount.sub(amount);
         totalCancelled += amount;
