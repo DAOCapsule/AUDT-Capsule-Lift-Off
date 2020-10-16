@@ -150,10 +150,13 @@ contract Staking is Ownable {
      */
     function returnEarningRatio() public view returns (uint256) {
 
-        return (totalReward.mul(1e18) / stakedAmount) + 1e18 ;
+        if (stakedAmount == 0)
+            return totalReward; // At this stage there is no contributions
+         else
+            return (totalReward.mul(1e18) / stakedAmount) + 1e18 ;
     }
 
-    function returnEarningsPerAmount(uint256 amount) public view returns(uint256) {
+    function returnEarningsPerAmount(uint256 amount)    public view returns(uint256) {
 
         return (amount * returnEarningRatio()).div(1e18);
     }
@@ -236,11 +239,14 @@ contract Staking is Ownable {
 
         _burnStakedToken(amount);
 
-        if (block.number > stakingDateEnd)
-            _deliverRewards(amount);        
-        else
+        if (block.number > stakingDateEnd){
+            _deliverRewards(amount);       
+            emit LogTokensRedeemed(msg.sender, returnEarningsPerAmount(amount));            
+        } 
+        else{
             _returnDeposit(amount);
-        emit LogTokensRedeemed(msg.sender, amount);
+            emit LogTokensRedeemed(msg.sender, amount);
+        }
     }
 
      /**
@@ -263,7 +269,7 @@ contract Staking is Ownable {
 
         amountRedeemed = returnEarningsPerAmount(amount);
         released[msg.sender] = released[msg.sender].add(amountRedeemed);
-        totalReleased += amountRedeemed;
+        totalReleased = totalReleased.add(amountRedeemed);
         _auditToken.safeTransfer(msg.sender, amountRedeemed);
         _deliverGovernanceToken((_governanceTokenRatio * amount) / 1e18);
         // _governanceToken.safeTransfer(msg.sender,(_governanceTokenRatio * amount) / 1e18);
@@ -279,7 +285,7 @@ contract Staking is Ownable {
         deposits[msg.sender] = deposits[msg.sender].sub(amount);
         cancelled[msg.sender] = released[msg.sender].add(amount);
         stakedAmount = stakedAmount.sub(amount);
-        totalCancelled += amount;
+        totalCancelled = totalCancelled.add(amount);
         _auditToken.transfer(msg.sender, amount);
         LogDepositCancelled(msg.sender, amount);
     }
