@@ -12,7 +12,7 @@ console.log("Infura key:" + process.env.INFURA_KEY);
 
 if (!MNEMONIC || !INFURA_KEY) {
 
-  
+
   console.error("Please set a mnemonic and infura key...")
   return
 }
@@ -30,25 +30,37 @@ module.exports = {
       blockTime: 3
     },
     rinkeby: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(
           MNEMONIC,
-          "https://rinkeby.infura.io/" + INFURA_KEY
+          "https://rinkeby.infura.io/v3/" + INFURA_KEY
         );
       },
       network_id: "*",
       gas: 4000000
     },
     ropsten: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(
           MNEMONIC,
-          "https://ropsten.infura.io/" + INFURA_KEY
+          "https://ropsten.infura.io/v3/" + INFURA_KEY
         );
       },
       network_id: 3,
       gas: 4500000,
       gasPrice: 1000000000
+    },
+    rinkeby: {
+      provider: function () {
+        return new HDWalletProvider(
+          MNEMONIC,
+          "https://rinkeby.infura.io/v3/" + INFURA_KEY
+        );
+      },
+      network_id: "*",
+      gas: 4000000
+
+
     },
     coverage: {
       host: 'localhost',
@@ -59,10 +71,10 @@ module.exports = {
     },
     live: {
       network_id: 1,
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(
           MNEMONIC,
-          "https://mainnet.infura.io/" + INFURA_KEY
+          "https://mainnet.infura.io/v3/" + INFURA_KEY
         );
       },
       gas: 4000000,
@@ -70,11 +82,11 @@ module.exports = {
     },
     mocha: {
       reporter: 'eth-gas-reporter',
-      reporterOptions : {
+      reporterOptions: {
         currency: 'USD',
         gasPrice: 2
       }
-    },    
+    },
   },
   compilers: {
     solc: {

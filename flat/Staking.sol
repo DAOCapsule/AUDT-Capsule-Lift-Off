@@ -1815,7 +1815,7 @@ contract Staking is Ownable {
     event LogDepositReceived(address indexed from, uint amount);
 
     ///@dev Emitted when staking tokens are returned
-    event Log_StakingTokenReturned(address indexed from, uint amount);
+    event LogStakingTokenReturned(address indexed from, uint amount);
 
     ///@dev Emitted when reward has been delivered
     event LogRewardDelivered(address indexed from, uint256 amount);
@@ -1828,6 +1828,9 @@ contract Staking is Ownable {
 
     ///@dev Emitted when unauthorized tokens are refunded
     event LogUnauthorizedTokensReturn(address indexed to, address token, uint256 amount);
+
+    ///@dev Emitted when redeem has complete
+    event LogTokensRedeemed(address indexed to, uint256 amount);
 
     /**
      * @dev Sets the below variables 
@@ -1910,10 +1913,13 @@ contract Staking is Ownable {
      */
     function returnEarningRatio() public view returns (uint256) {
 
-        return (totalReward.mul(1e18) / stakedAmount) + 1e18 ;
+        if (stakedAmount == 0)
+            return totalReward; // At this stage there is no contributions
+         else
+            return (totalReward.mul(1e18) / stakedAmount) + 1e18 ;
     }
 
-    function returnEarningsPerAmount(uint256 amount) public view returns(uint256) {
+    function returnEarningsPerAmount(uint256 amount)    public view returns(uint256) {
 
         return (amount * returnEarningRatio()).div(1e18);
     }
@@ -1996,10 +2002,14 @@ contract Staking is Ownable {
 
         _burnStakedToken(amount);
 
-        if (block.number > stakingDateEnd)
-            _deliverRewards(amount);        
-        else
+        if (block.number > stakingDateEnd){
+            _deliverRewards(amount);       
+            emit LogTokensRedeemed(msg.sender, returnEarningsPerAmount(amount));            
+        } 
+        else{
             _returnDeposit(amount);
+            emit LogTokensRedeemed(msg.sender, amount);
+        }
     }
 
      /**
@@ -2009,7 +2019,7 @@ contract Staking is Ownable {
     function _burnStakedToken(uint256 amount) internal {
 
         _stakingToken.burn(msg.sender, amount);
-        Log_StakingTokenReturned(msg.sender, amount);
+        LogStakingTokenReturned(msg.sender, amount);
     }
 
      /**
@@ -2022,7 +2032,7 @@ contract Staking is Ownable {
 
         amountRedeemed = returnEarningsPerAmount(amount);
         released[msg.sender] = released[msg.sender].add(amountRedeemed);
-        totalReleased += amountRedeemed;
+        totalReleased = totalReleased.add(amountRedeemed);
         _auditToken.safeTransfer(msg.sender, amountRedeemed);
         _deliverGovernanceToken((_governanceTokenRatio * amount) / 1e18);
         // _governanceToken.safeTransfer(msg.sender,(_governanceTokenRatio * amount) / 1e18);
@@ -2035,9 +2045,10 @@ contract Staking is Ownable {
      */
     function _returnDeposit(uint256 amount) internal {
 
+        deposits[msg.sender] = deposits[msg.sender].sub(amount);
         cancelled[msg.sender] = released[msg.sender].add(amount);
         stakedAmount = stakedAmount.sub(amount);
-        totalCancelled += amount;
+        totalCancelled = totalCancelled.add(amount);
         _auditToken.transfer(msg.sender, amount);
         LogDepositCancelled(msg.sender, amount);
     }
