@@ -1,21 +1,20 @@
 "use strict";
+
+
+
 let buildDir, configDir, account, gasPrice, gasAmount, secondsInBlock, earningRatio, receipts, stakingTokenSymbol,
     stakedAmount, totalReward, userHoldingsAUDT, conversionUSD_AUDT = 10, userHoldingsGovToken,
-    startBlock, endBlock, tokenAddress, stakingAddress, stakingReceipt, governanceToken, selectedCapsule=1;
+    startBlock, endBlock, tokenAddress, stakingAddress, stakingReceipt, governanceToken, selectedCapsule = 1,
+    govTokenRewardRatio, stakingStartTime, stakingEndTime, deploymentTime, deploymentStatus, chainId = "0x539";
 
 async function init() {
 
-    // let provider = (window.web3 && window.web3.currentProvider);
 
 
-    if (typeof window.web3 === 'undefined') {
-        showTimeNotification("top", "right", "Please enable metamask.")
-    }
-    // else if (ethereum.selectedAddress == undefined) {
-    //     showTimeNotification("top", "right", "Please unlock metamask.")
-    // }
+
 
     let test = ethereum.isMetaMask;
+    ethereum.autoRefreshOnNetworkChange = false;
 
     gasPrice = 20000000000;
     gasAmount = 4000000;
@@ -24,51 +23,81 @@ async function init() {
     configDir = "../../config/"
     selectedCapsule = 1;
 
+
+
+
     const ethereumButton1 = document.querySelector('.enableEthereumButton');
     const ethereumButton = document.querySelector('.enableEthereumButton');
-
-
-    // ethereumButton.addEventListener('click', () => {
-    //     getAccount();
-    // });
-
-
-
-
-
 
     ethereum.on('accountsChanged', function (accounts) {
         // Time to reload your interface with accounts[0]!
         console.log("accounts:" + accounts);
+        getAccount();
     });
 
-    if (typeof window.ethereum !== 'undefined') {
-        console.log('MetaMask is installed!');
+    ethereum.on('chainChanged', function (chainIdCurrent) {
+        // window.location.reload();
+        if (chainIdCurrent != chainId) {
+            showTimeNotification("top", "left", "You switched to unsupported network.");
+            $(".enableEthereumButton").css("display", "none");
+        } else
+            if (typeof window.ethereum !== 'undefined') {
+                console.log('MetaMask is installed!');
+    
+                getAccount(1);
+    
+            }
+        console.log("chain id:" + chainId);
+    });
+
+
+
+    if (typeof window.web3 === 'undefined') {
+        showTimeNotification("top", "left", "Please enable metamask.");
+        return;
+    }
+    else if (ethereum.selectedAddress == undefined) {
+        showTimeNotification("top", "left", "Please connect wallet.");
+        $(".widget").css("display", "none");
+        return;
+    } else if (ethereum.chainId != chainId) {       
+        $(".widget").css("display", "none");
+        showTimeNotification("top", "left", "You are connected to unsupported network.");
+        return;
+    }
+    else {
+        $(".widget").css("display", "block");
     }
 
-    // let inputBox = document.getElementById('#');
 
-    // inputBox.onkeyup = function () {
-    //     document.getElementById('earned-amount').innerHTML = inputBox.value;
-    // }
+    if (ethereum.selectedAddress != undefined) {
+        console.log('MetaMask is installed!');
+        $(".widget").css("display", "block");
 
-    // loadStats();
-    // loadContracts(1);
-    displayProgress(1);
+        getAccount(1);
 
-    if (ethereum.isConnected()){
-        $(".enableEthereumButton").css("display", "none");
-        const accounts = await ethereum.request({ method: 'eth_accounts' });
-        account = accounts[0];
-        loadPortfolio(1);
+        var interval = setInterval(function () {
+            loadPortfolio(selectedCapsule).then(function (res, err) {
+                return displayProgress(selectedCapsule);
+            }).catch(function (res) {
 
-    } else 
-    $(".enableEthereumButton").css("display", "block");
-
-    // whichNetwork();  
-    
+                console.log(res);
+            })
+        }, 10000);
+    }
 }
 
+
+// For now, 'eth_accounts' will continue to always return an array
+function handleAccountsChanged(accounts) {
+    if (accounts.length === 0) {
+        // MetaMask is locked or the user has not connected any accounts
+        console.log('Please connect to MetaMask.');
+    } else if (accounts[0] !== account) {
+        account = accounts[0];
+        // Do any other work!
+    }
+}
 
 async function getAccount(capsuleNumber) {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
@@ -81,10 +110,19 @@ async function getAccount(capsuleNumber) {
     $(".enableEthereumButton").css("display", "none");
 
     // loadStats();
-    loadPortfolio(selectedCapsule);
+    loadContracts(1).then({
 
+    }).then(function (res, err) {
+        return loadPortfolio(selectedCapsule);
+    }).then(function (res, err) {
+        displayProgress(1);
+    }).catch(function (res) {
 
+        console.log(res);
+    })
 }
+
+
 
 async function loadConfig(fileName) {
 
@@ -105,43 +143,33 @@ async function loadConfig(fileName) {
 
 }
 
+
+
 async function loadContracts(capsuleNumber) {
 
 
     let res = await loadConfig("airdrop" + capsuleNumber + ".json");
 
     let actual_JSON = JSON.parse(res);
-    const { AUDT_TOKEN_ADDRESS, STAKING_CONTRACT_ADDRESS, STAKING_RECEIPT, GOVERNANCE_TOKEN_ADDRESS } = actual_JSON;
+    const { AUDT_TOKEN_ADDRESS, STAKING_CONTRACT_ADDRESS, STAKING_RECEIPT, GOVERNANCE_TOKEN_ADDRESS, GOVERNANCE_TOKEN_REWARD_RATIO,
+        STAKING_START_TIME, STAKING_END_TIME, DEPLOYMENT_TIME, DEPLOYMENT_STATUS } = actual_JSON;
 
     tokenAddress = AUDT_TOKEN_ADDRESS;
     stakingAddress = STAKING_CONTRACT_ADDRESS;
     stakingReceipt = STAKING_RECEIPT;
     governanceToken = GOVERNANCE_TOKEN_ADDRESS;
-
-
-
+    stakingEndTime = STAKING_END_TIME;
+    stakingStartTime = STAKING_START_TIME;
+    deploymentTime = DEPLOYMENT_TIME;
+    deploymentStatus = DEPLOYMENT_STATUS;
+    govTokenRewardRatio=GOVERNANCE_TOKEN_REWARD_RATIO;
 
 }
 
 
 async function populatePoolTable(capsuleNumber) {
 
-    // var currentRow=$("#pool-table").closest("tr"); 
-
-    //      var col1=currentRow.find("td:eq(0)").html(); // get current row 1st table cell TD value
-    //      var col2=currentRow.find("td:eq(1)").html(); // get current row 2nd table cell TD value
-    //      var col3=currentRow.find("td:eq(2)").html(); // get current row 3rd table cell  TD value
-    //      var data=col1+"\n"+col2+"\n"+col3;
-
-    let res = await loadConfig("airdrop" + capsuleNumber + ".json");
-
-
-    let actual_JSON = JSON.parse(res);
-    const { GOVERNANCE_TOKEN_REWARD_RATIO } = actual_JSON;
-
     let blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
-
-
 
     $("#tb-mission-reward").html((Number(totalReward) / Math.pow(10, 18)).formatMoney(2, ".", ","));
     $("#tb-mission-reward-usd").html((Number(totalReward) / Math.pow(10, 18) / conversionUSD_AUDT).formatMoney(2, ".", ","));
@@ -156,16 +184,13 @@ async function populatePoolTable(capsuleNumber) {
     $("#tb-ratio").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ","));
     $("#tb-ratio-usd").html((earningRatio / Math.pow(10, 18) / conversionUSD_AUDT).formatMoney(2, ".", ","));
 
-    $("#tb-governance-token").html((Number(GOVERNANCE_TOKEN_REWARD_RATIO) * Number(receipts) / Math.pow(10, 36)).formatMoney(2, ".", ","));
-    $("#tb-governance-token-usd").html((Number(GOVERNANCE_TOKEN_REWARD_RATIO) * Number(receipts) / Math.pow(10, 36) / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-governance-token").html((Number(govTokenRewardRatio) * Number(receipts) / Math.pow(10, 36)).formatMoney(2, ".", ","));
+    $("#tb-governance-token-usd").html((Number(govTokenRewardRatio) * Number(receipts) / Math.pow(10, 36) / conversionUSD_AUDT).formatMoney(2, ".", ","));
 
     $("#return-percentage").html((((earningRatio / Math.pow(10, 18)) - 1) * 100).formatMoney(2, ".", ",") + "%");
     $("#current-block").html("Now Block:" + blockNumber);
     $("#start-block").html("Start Block:" + startBlock);
     $("#end-block").html("End Block:" + endBlock);
-
-
-
 
 }
 
@@ -218,14 +243,10 @@ async function loadPortfolio(selectedCapsule) {
 
     userHoldingsGovToken = await promisify(cb => GovernanceContractHandle.balanceOf(account, cb));
 
-
-
     $("#current-value").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " AUDT");
     $("#portfolio-value").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
-
-
     $("#your-receipts").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " " + stakingTokenSymbol);
-    $("#taking-amount").attr("placeholder", "Enter amount of " + stakingTokenSymbol + " to redeem..");
+    // $("#taking-amount").attr("placeholder", "Enter amount of " + stakingTokenSymbol + " to redeem..");
 
     $("#stake-apr").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ",") + "%");
     $("#staking-amount").val("");
@@ -252,24 +273,10 @@ async function loadPortfolio(selectedCapsule) {
 
         $("#take-amount").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
         $("#take-apr").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ",") + "%");
-
-
-
         $("#take").css("display", "block");
-
-
-
-
-
     }
 
     populatePoolTable(selectedCapsule);
-
-
-
-
-
-
 }
 
 
@@ -277,17 +284,11 @@ async function loadPortfolio(selectedCapsule) {
 async function updateCampaignProgress() {
 
     let stakingPercentage;
-    let res = await loadConfig("airdrop1.json");
-    let actual_JSON = JSON.parse(res);
-    const { STAKING_START_TIME, STAKING_END_TIME, DEPLOYMENT_TIME } = actual_JSON;
     let blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
-
-
-
-    let depositPercentage = (blockNumber - DEPLOYMENT_TIME) / (STAKING_START_TIME - DEPLOYMENT_TIME) * 100;
+    let depositPercentage = (blockNumber - deploymentTime) / (stakingStartTime - deploymentTime) * 100;
 
     if (depositPercentage >= 100) {
-        stakingPercentage = (blockNumber - STAKING_START_TIME) / (STAKING_END_TIME - STAKING_START_TIME) * 100;
+        stakingPercentage = (blockNumber - stakingStartTime) / (stakingEndTime - stakingStartTime) * 100;
         // $("#deposit-progress").css("display", "none");
         if (stakingPercentage <= 100) {
             $("#stake-progress").css("display", "block");
@@ -311,87 +312,8 @@ async function updateCampaignProgress() {
     }
 
     return [depositPercentage, stakingPercentage];
-
-
 }
 
-
-//not used
-async function loadStats() {
-
-
-    displayProgress();
-    let spinner = ' <i class="fa fa-spinner fa-spin" style="font-size:24px;color:green"></i></br>';
-
-    $("#total-staked").html(spinner);
-
-
-
-    let res = await loadJSON("Staking.json");
-
-    let actual_JSON = JSON.parse(res);
-    let contract = web3.eth.contract(actual_JSON["abi"]);
-    let contractHandle = contract.at(stakingAddress);
-
-    res = await loadJSON("Token.json");
-    actual_JSON = JSON.parse(res);
-    contract = web3.eth.contract(actual_JSON["abi"]);
-    let tokenHandle = contract.at(tokenAddress);
-
-
-
-
-    let stakedAmount = await promisify(cb => contractHandle.stakedAmount(cb));
-    let deposits = await promisify(cb => contractHandle.deposits(account, cb));
-    let released = await promisify(cb => contractHandle.released(account, cb));
-    let stakingDateStart = await promisify(cb => contractHandle.stakingDateStart(cb));
-    let stakingDateEnd = await promisify(cb => contractHandle.stakingDateEnd(cb));
-    let blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
-    let rewards = await promisify(cb => contractHandle.totalReward(cb));
-    let earningRatio = await promisify(cb => contractHandle.returnEarningRatio(cb));
-    let earningsPerAmount = await promisify(cb => contractHandle.returnEarningsPerAmount(deposits, cb));
-    let totalReleased = await promisify(cb => contractHandle.totalReleased(cb));
-    let totalCancelled = await promisify(cb => contractHandle.totalCancelled(cb));
-    let balanceOfStaking = await promisify(cb => tokenHandle.balanceOf(stakingAddress, cb));
-    let balanceOfAUDT = await promisify(cb => tokenHandle.balanceOf(account, cb));
-
-
-
-    // if (earningRatio > 10 * Math.pow(10,18))
-    earningRatio = earningRatio / Math.pow(10, 18)
-
-    let lengthOfEarningsRatio = earningRatio.toString().length;
-    let toClaim = (Number(deposits) / Math.pow(10, 18) - (Number(released) / Number(earningRatio) / Math.pow(10, 18)));
-
-    if (toClaim == 0)
-        $("#redeem").attr("disabled", true);
-    else
-        $("#redeem").attr("disabled", false);
-
-
-
-
-    $("#rewards").html(formatNumber(Number(rewards / Math.pow(10, 18))));
-    $("#earning-ratio").html(Number(earningRatio));
-    $("#to-claim").html(formatNumber(toClaim));
-    $("#total-staked").html(formatNumber(Number(stakedAmount) / Math.pow(10, 18)));
-    $("#your-contribution").html(formatNumber(Number(deposits) / Math.pow(10, 18)) + " AUDT");
-    $("#return").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)));
-    $("#current-block").html(formatNumber(Number(blockNumber)));
-    $("#start-block").html(formatNumber(Number(stakingDateStart)));
-    $("#end-block").html(formatNumber(Number(stakingDateEnd)));
-    $("#total-released").html(formatNumber(Number(totalReleased) / Math.pow(10, 18)));
-    $("#total-cancelled").html(formatNumber(Number(totalCancelled) / Math.pow(10, 18)));
-    $("#contract-balance").html(formatNumber(Number(balanceOfStaking) / Math.pow(10, 18)));
-
-    $("#token-balance").html(formatNumber(Number(balanceOfAUDT) / Math.pow(10, 18)));
-    displayProgress
-    $("#spinner").html("");
-
-}
-
-
-// not used
 async function displayProgress(capsuleNumber) {
 
     let relativePercentageText;
@@ -402,30 +324,22 @@ async function displayProgress(capsuleNumber) {
     let relativeRedeemPercentage;
     let redeemPercentage;
 
-
-    let res = await loadConfig("airdrop" + capsuleNumber + ".json");
-    let actual_JSON = JSON.parse(res);
-    const { STAKING_START_TIME, STAKING_END_TIME, DEPLOYMENT_TIME } = actual_JSON;
     let blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
-
-
-    let depositPercentage = (blockNumber - DEPLOYMENT_TIME) / (STAKING_START_TIME - DEPLOYMENT_TIME) * 100;
+    let depositPercentage = (blockNumber - deploymentTime) / (stakingStartTime - deploymentTime) * 100;
     let relativeDepositPercentage = Math.round(depositPercentage / 3);
 
     if (depositPercentage >= 100) {
         relativeDepositPercentage = 34;
         relativePercentageText = "100%";
-        stakingPercentage = (blockNumber - STAKING_START_TIME) / (STAKING_END_TIME - STAKING_START_TIME) * 100;
+        stakingPercentage = (blockNumber - stakingStartTime) / (stakingEndTime - stakingStartTime) * 100;
         relativeStakingPercentage = Math.round(stakingPercentage / 3);
         $("#contribute").attr("disabled", true);
         if (stakingPercentage >= 100) {
             relativeStakingPercentageText = "100%";
             relativeStakingPercentage = 33;
-            redeemPercentage = (blockNumber + 1 - STAKING_END_TIME) / (STAKING_END_TIME + 10000 - STAKING_END_TIME) * 100;
+            redeemPercentage = (blockNumber + 1 - stakingEndTime) / (stakingEndTime + 10000 - stakingEndTime) * 100;
             relativeRedeemPercentage = Math.round(redeemPercentage / 3);
             relativeRedeemPercentageText = Math.round(redeemPercentage) + "%";
-
-
         } else {
             relativeStakingPercentageText = Math.round(stakingPercentage) + "%";
             relativeRedeemPercentageText = "";
@@ -435,9 +349,6 @@ async function displayProgress(capsuleNumber) {
         $("#contribute").attr("disabled", false);
     }
 
-
-
-
     $('#deposit-indicator ').css({ 'width': relativeDepositPercentage + "%" });
     $('#deposit-indicator ').text(relativePercentageText);
     $('#staking-indicator ').css({ 'width': relativeStakingPercentage + "%" });
@@ -445,10 +356,6 @@ async function displayProgress(capsuleNumber) {
 
     $('#redeem-indicator ').css({ 'width': relativeRedeemPercentage + "%" });
     $('#redeem-indicator ').text(relativeRedeemPercentageText);
-
-
-
-
 }
 
 async function handleDeposit() {
@@ -459,8 +366,6 @@ async function handleDeposit() {
     var sequence = Promise.resolve();
 
     sequence = sequence.then(function () {
-        // return checkMetamaskStatus();
-
     })
         .then(function (res) {
             return preauthorizeAUDT();
@@ -468,9 +373,10 @@ async function handleDeposit() {
             return depositAUDT();
         }).then(function (res, err) {
             return loadPortfolio(selectedCapsule);
+        }).then(function (res, err) {
+            return displayProgress(selectedCapsule);
 
         }).catch(function (res) {
-
             console.log(res);
         })
 }
@@ -500,16 +406,8 @@ function showTimeNotification(from, align, text) {
 
 function preauthorizeAUDT(amount) {
 
-
-
     return new Promise(async function (resolve, reject) {
-
-
-
         let valueToStake, spendAddress, airdropAddress;
-
-
-
         let blockNum = await promisify(cb => web3.eth.getBlockNumber(cb));
         let res = await loadJSON("Token.json");
         let actual_JSON = JSON.parse(res);
@@ -545,30 +443,20 @@ function preauthorizeAUDT(amount) {
             } else {
                 console.error(error);
                 reject(error);
-
             }
         });
-
-
     })
-
-
 }
 
 function depositAUDT() {
 
     return new Promise(async function (resolve, reject) {
 
-
         let blockNum = await promisify(cb => web3.eth.getBlockNumber(cb));
-
         let res = await loadJSON("Staking.json");
-
         let actual_JSON = JSON.parse(res);
         let contract = web3.eth.contract(actual_JSON["abi"]);
         let contractHandle = contract.at(stakingAddress);
-
-
         var valueToStake = $("#staking-amount").val() * Math.pow(10, 18);
         var logValues;
         var id = progressAction("Staking AUDT", 1, "", false, false);
@@ -619,17 +507,13 @@ function redeem() {
 
 
         let blockNum = await promisify(cb => web3.eth.getBlockNumber(cb));
-
         let res = await loadJSON("Staking.json");
-
         let actual_JSON = JSON.parse(res);
         let contract = web3.eth.contract(actual_JSON["abi"]);
         let contractHandle = contract.at(stakingAddress);
-
-
-        var valueToRedeem = $("#taking-amount").val() * Math.pow(10, 18);
-        var logValues;
-        var id = progressAction("Redeeming AUDT", 1, "", false, true);
+        let valueToRedeem = $("#taking-amount").val() * Math.pow(10, 18);
+        let logValues;
+        let id = progressAction("Redeeming AUDT", 1, "", false, true);
 
         contractHandle.redeem(valueToRedeem, {
             from: account
@@ -746,59 +630,49 @@ function formatNumber(number) {
     return x1 + x2;
 }
 
-// $(document).on('click', '#contribute', function (e) {
-//     //prevent the form from doing a submit
-//     // e.preventDefault();
-
-//     handleAUDT();
-
-// });
-
-// $(document).on('onkeyup', "#staking-amount", function () {
-//     $('#earned-amount').innerHTML = this.value;
-// });
-
 
 // select clicked project
 $(document).on("click", "#mission-table tr", async function (e) {
 
-    $("#noticeModal").toggle();
-    $("#noticeModal").modal('hide');
     console.log($(e.currentTarget).index());
-
     selectedCapsule = $(e.currentTarget).index();
-    $("#moonraker").html("MOONRAKER " + (selectedCapsule + 1));
+    selectedCapsule++;
+    let isDisabled = $('#m' + selectedCapsule).attr('disabled') ? true : false;
 
-    loadContracts(selectedCapsule + 1);
-    loadPortfolio(selectedCapsule + 1)
-    displayProgress(selectedCapsule + 1);
-    // populatePoolTable(selectedCapsule + 1);
+    if (!isDisabled) {
 
+        $("#noticeModal").toggle();
+        $("#noticeModal").modal('hide');
 
-    // if ($(e.currentTarget).index() != 0) {
-    //     $("#projects").find('tr').removeClass('selected');
+        $("#moonraker").html("MOONRAKER " + (selectedCapsule));
+        loadContracts(selectedCapsule).then({
 
-    //     $(this).addClass('selected');
-    // }
+        }).then(function (res, err) {
+            return loadPortfolio(selectedCapsule);
+
+        }).then(function (res, err) {
+            return displayProgress(selectedCapsule);
+
+        }).catch(function (res) {
+
+            console.log(res);
+        })
+    }
 })
 
 
 
-$(document).ready(function () {
 
+$(document).ready(function () {
     $(".enableEthereumButton").click(function () {
         getAccount();
-
     })
 
     $("#staking-amount").keyup(function () {
 
         earningRatio = 1 + ((Number(totalReward) * Math.pow(10, 18)) / (Number(stakedAmount) + (Number(this.value) * Math.pow(10, 18))) / Math.pow(10, 18));
         $('#stake-apr').text((Number(earningRatio)).formatMoney(2, ".", ",") + "%");
-
-
         $('#earned-amount').text(((Number(this.value) * earningRatio)).formatMoney(2, ".", ",") + " AUDT");
-
 
         if (Number(this.value) > Number(userHoldingsAUDT / Math.pow(10, 18))) {
             $("#msg-error-stake").css("background-color", "lightyellow");
@@ -812,18 +686,11 @@ $(document).ready(function () {
                 $("#contribute").css("display", "block");
                 // $('#take-amount').text((Number(this.value)).formatMoney(2, ".", ",") + " AUDT");
             }
-        }
-
-        // if (this.value == "")
-        //     $("#contribute").css("display", "none");
-        // else
-        //     $("#contribute").css("display", "block");
+        }       
 
     });
 
     $("#taking-amount").keyup(function () {
-        // $('#take-amount').text(((this.value * earningRatio) / Math.pow(10, 18)).formatMoney(2, ".", ",") + " AUDT");
-
 
         if (Number(this.value) > Number(receipts / Math.pow(10, 18))) {
             $("#msg-error-take").css("background-color", "lightyellow");
@@ -838,12 +705,6 @@ $(document).ready(function () {
                 $('#take-amount').text((Number(this.value)).formatMoney(2, ".", ",") + " AUDT");
             }
         }
-
-        // if (this.value == "")
-        //     $("#take").css("display", "none");
-        // else
-        //     $("#take").css("display", "block");
-
     });
 
     $("#contribute").click(function () {
@@ -861,7 +722,20 @@ $(document).ready(function () {
         });
     });
 
-    $("#change-mission").click(function () {
+    $("#change-mission").click(async function () {
+        let res = await loadConfig("deploymentStatus.json");
+        let actual_JSON = JSON.parse(res);
+        const { DEPLOYMENT_STATUS_1, DEPLOYMENT_STATUS_2, DEPLOYMENT_STATUS_3, DEPLOYMENT_STATUS_4 } = actual_JSON;
+        $("#capsule1-status").text(DEPLOYMENT_STATUS_1 ? "Deployed" : "NotDeployed");
+        $("#capsule2-status").text(DEPLOYMENT_STATUS_2 ? "Deployed" : "NotDeployed");
+        $("#capsule3-status").text(DEPLOYMENT_STATUS_3 ? "Deployed" : "NotDeployed");
+        $("#capsule4-status").text(DEPLOYMENT_STATUS_4 ? "Deployed" : "NotDeployed");
+
+        $("#m1").attr('disabled', DEPLOYMENT_STATUS_1 ? false : true);
+        $("#m2").attr('disabled', DEPLOYMENT_STATUS_2 ? false : true);
+        $("#m3").attr('disabled', DEPLOYMENT_STATUS_3 ? false : true);
+        $("#m4").attr('disabled', DEPLOYMENT_STATUS_4 ? false : true);
+
         $("#noticeModal").modal();
     });
 

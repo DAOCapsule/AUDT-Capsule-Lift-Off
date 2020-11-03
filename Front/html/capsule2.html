@@ -21,6 +21,16 @@
     <link href="../assets/css/material-kit.css" rel="stylesheet" />
 
     <style>
+        #text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-size: 50px;
+            color: white;
+            transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+        }
+
         .button {
             display: inline-block;
             background: teal;
@@ -169,10 +179,11 @@
 
 
 
-                <div class="col-md-8 col-md-offset-2 col-sm-8 col-sm-offset-2 col-xs-12">
+                <div class="widget col-md-8 col-md-offset-2 col-sm-8 col-sm-offset-2 col-xs-12">
                     <div class="card-content" style="align-self: center;">
 
-                        <div id="moonraker" style="color:white; font-size:40px; text-align: center; height:50px"> MOONRAKER 1
+                        <div id="moonraker" style="color:white; font-size:40px; text-align: center; height:50px">
+                            MOONRAKER 1
 
                         </div>
                         <div id="change-mission" style="font-weight:bold; margin: auto; width:100px "
@@ -180,8 +191,8 @@
                             <img src="../assets/img/DAOCapsule1.png" width="30" alt="" height="30" class="pull-left">
                             Change Mission</div>
 
-                            
-                           
+
+
                         <!-- <div class="dropdown">
                             <button href="#" class="btn dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                                 Regular
@@ -455,7 +466,7 @@
                                             <div class="col-md-11  col-sm-11 col-xs-11">
                                                 <div class="form-group label-floating">
                                                     <input id="taking-amount" max="5" type="text" class="form-control"
-                                                        placeholder="Enter amount of MOONRAKER to redeem..">
+                                                        placeholder="Enter amount of MOONRAKER tokens to redeem..">
 
                                                 </div>
                                             </div>
@@ -629,6 +640,11 @@
 
     </div>
 
+    <div style="background-color: transparent" class="modal fade" id="invalid-network" role="dialog">
+        <div class="modal-dialog modal-lg"></div>
+
+    </div>
+
     <!-- Modal progress box start -->
     <div class="modal fade" id="progress" role="dialog">
         <div class="modal-dialog modal-lg">
@@ -662,7 +678,7 @@
                     <h5 class="modal-title" id="myModalLabel"></h5>
                 </div>
                 <div class="modal-body" id="modal-message">
-                    <div class="card-content table-responsive"  
+                    <div class="card-content table-responsive"
                         style="margin: auto;width: 80% !important; border-spacing: 2px;">
 
 
@@ -680,11 +696,11 @@
                                 <tr style="text-align:left">
                                     <td>MOONRAKER_1</td>
                                     <td>4,500,000</td>
-                                    <td>Deployed</td>
+                                    <td id="capsule1-status"></td>
                                     <td>
                                         <div class="togglebutton">
                                             <label>
-                                                <input type="radio" name="mission" checked="">
+                                                <input id="m1" type="radio" name="mission" checked>
                                             </label>
                                         </div>
                                     </td>
@@ -693,11 +709,11 @@
                                 <tr style="text-align:left">
                                     <td>MOONRAKER_2</td>
                                     <td>9,000,000</td>
-                                    <td>Not Deployed</td>
+                                    <td id="capsule2-status"></td>
                                     <td>
                                         <div class="togglebutton">
                                             <label>
-                                                <input type="radio" name="mission">
+                                                <input id="m2" type="radio" name="mission">
 
                                             </label>
                                         </div>
@@ -706,11 +722,11 @@
                                 <tr style="text-align:left">
                                     <td>MOONRAKER_3</td>
                                     <td>13,500,000</td>
-                                    <td>Not Deployed</td>
+                                    <td id="capsule3-status"></td>
                                     <td>
                                         <div class="togglebutton">
                                             <label>
-                                                <input type="radio" disabled name="mission">
+                                                <input id="m3" type="radio" name="mission">
 
                                             </label>
                                         </div>
@@ -719,11 +735,11 @@
                                 <tr style="text-align:left">
                                     <td>MOONRAKER_4</td>
                                     <td>18,000,000</td>
-                                    <td>Not Deployed</td>
+                                    <td id="capsule4-status"></td>
                                     <td>
                                         <div class="togglebutton">
                                             <label>
-                                                <input type="radio" disabled name="mission">
+                                                <input id="m4" type="radio" name="mission">
                                             </label>
                                         </div>
                                     </td>
@@ -745,7 +761,8 @@
 
 </body>
 <!--   Core JS Files   -->
-<script src="../assets/js/provider.js"></script>
+
+<!-- <script src="../assets/js/provider.js"></script> -->
 <script src="../assets/js/jquery.min.js" type="text/javascript"></script>
 <script src="../assets/js/bootstrap.min.js" type="text/javascript"></script>
 <script src="../assets/js/material.min.js"></script>
@@ -771,6 +788,9 @@
 <!-- Control Center for Material Kit: activating the ripples, parallax effects, scripts from the example pages etc -->
 <script src="../assets/js/material-kit.js" type="text/javascript"></script>
 <script src="../assets/js/script.js"></script>
+
+<!--  Notifications Plugin    -->
+<script src="../assets/js/bootstrap-notify.js"></script>
 
 <script type="text/javascript">
 
