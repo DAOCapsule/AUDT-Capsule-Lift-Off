@@ -2000,6 +2000,7 @@ contract Staking is Ownable {
      */
     function redeem(uint256 amount) public {
 
+        require(_stakingToken.balanceOf(msg.sender) >= amount, "Staking:redeem - you are claiming more than your balance.");    
         _burnStakedToken(amount);
 
         if (block.number > stakingDateEnd){
@@ -2030,6 +2031,7 @@ contract Staking is Ownable {
 
         uint256 amountRedeemed;
 
+        
         amountRedeemed = returnEarningsPerAmount(amount);
         released[msg.sender] = released[msg.sender].add(amountRedeemed);
         totalReleased = totalReleased.add(amountRedeemed);
@@ -2045,7 +2047,9 @@ contract Staking is Ownable {
      */
     function _returnDeposit(uint256 amount) internal {
 
-        deposits[msg.sender] = deposits[msg.sender].sub(amount);
+        // require(_stakingToken.balanceOf(msg.sender) >= amount, "Staking:_returnDeposit - you are claiming more than your balance.");  
+
+        // deposits[msg.sender] = deposits[msg.sender].sub(amount);
         cancelled[msg.sender] = released[msg.sender].add(amount);
         stakedAmount = stakedAmount.sub(amount);
         totalCancelled = totalCancelled.add(amount);

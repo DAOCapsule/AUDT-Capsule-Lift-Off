@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!DOCTYPE html>
+    <meta charset="utf-8" />
+    <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title id="page-title">DAOCapsule</title>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+    <meta name="viewport" content="width=device-width" />
+    <link href="../assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="../assets/css/material-dashboard.css" rel="stylesheet" />
+    <!-- <link href="../assets/css/blackbird.css" rel="stylesheet" /> -->
+    <link rel="stylesheet" href="../assets/css/basic.css">
+    <link rel="stylesheet" href="../assets/css/index.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" rel="stylesheet">
+
+    <script>
+        function includeHTML() {
+            var z, i, elmnt, file, xhttp;
+            /*loop through a collection of all HTML elements:*/
+            z = document.getElementsByTagName("*");
+            for (i = 0; i < z.length; i++) {
+                elmnt = z[i];
+                /*search for elements with a certain attribute:*/
+                file = elmnt.getAttribute("w3-include-html");
+                if (file) {
+                    /*make an HTTP request using the attribute value as the file name:*/
+                    xhttp = new XMLHttpRequest();
+                    xhttp.onreadystatechange = function () {
+                        if (this.readyState == 4) {
+                            if (this.status == 200) { elmnt.innerHTML = this.responseText; }
+                            if (this.status == 404) { elmnt.innerHTML = "Page not found."; }
+                            /*remove the attribute, and call this function once more:*/
+                            elmnt.removeAttribute("w3-include-html");
+                            includeHTML();
+                        }
+                    }
+                    xhttp.open("GET", file, true);
+                    xhttp.send();
+                    /*exit the function:*/
+                    return;
+                }
+            }
+        };
+    </script>
+
+    <style>
+        body {
+            background-image: url('../assets/img/card-4.jpeg');
+            background-repeat: repeat-y;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <div class="tab-content">
+
+        <div class="grid-page-projects">
+            <div class="header">
+                <div class="container">
+                    <nav class="nav nav-pills-warning pt-3 pb-3 ml-n4 mr-n4 bg-dark shadow-none">
+                        <div class="w-100 ml-2"></div>
+                        <img src="../assets/img/DAOCapsule1.png" width="60" alt="" class="ml-3 mr-3" height="60">
+                        <a style="padding:10px" class="nav-item nav-link text-uppercase text-light mt-2 mb-2 m"
+                            href="dashboard.html">Intro</a>
+                        <a style="padding:10px" class="nav-item nav-link text-uppercase text-light mt-2 selected m"
+                            href="projects.html">Capsules</a>
+                    </nav>
+                </div>
+
+                <button style="display:block; background-color: rgb(0, 17, 255);"
+                    class="btn btn-gray enableEthereumButton" id="connect-metamask">
+                    <i style="font-size: 40px;" class="material-icons">touch_app</i>Connect
+                </button>
+
+            </div>
+
+
+            <div class="menu-projects">
+                <ul class="step project">
+                    <li class="active tab" style="display:inline-block; margin-left: 20px;">
+                        <a href="#tab1" data-toggle="tab" class="m">
+                            <div id="proj1" class="desktop hidden-xs hidden-sm"> <i class="material-icons"
+                                    id="0">check_circle</i>
+                                Moonraker 1</div>
+                            <div class="mobile visible-xs visible-sm" style="font-size:17px"> <i
+                                    class="material-icons">check_circle</i></div>
+                        </a>
+                    </li>
+
+                    <li class="tab" style="display:inline-block;">
+                        <a href="#tab2" data-toggle="tab" class="m">
+                            <div id="proj2" class="desktop hidden-xs hidden-sm"> <i class="material-icons"
+                                    id="1">donut_large</i>
+                                Moonraker 2</div>
+                            <div class="mobile visible-xs visible-sm" style="font-size:17px"> <i
+                                    class="material-icons">donut_large</i>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="tab" style="display:inline-block;">
+                        <a href="#tab3" data-toggle="tab" class="m">
+                            <div id="proj3" class="desktop hidden-xs hidden-sm"> <i class="material-icons"
+                                    id="2">donut_large</i>
+                                Moonraker 3</div>
+                            <div class="mobile visible-xs visible-sm" style="font-size:17px"> <i
+                                    class="material-icons">donut_large</i></div>
+                        </a>
+                    </li>
+                    <li class="tab" style="display:inline-block;">
+                        <a href="#tab4" data-toggle="tab" class="m">
+                            <div id="proj4" class="desktop hidden-xs hidden-sm"> <i class="material-icons"
+                                    id="2">donut_large</i>
+                                Moonraker 4</div>
+                            <div class="mobile visible-xs visible-sm" style="font-size:17px"> <i
+                                    class="material-icons">donut_large</i></div>
+                        </a>
+                    </li>
+                </ul>
+
+            </div>
+
+            <div class="grid-content-projects">
+                <div class="tab-content">
+                    <div class="tab-pane active" id="tab1">
+                        <div class="content">
+                            <div class="container-fluid">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="card">
+
+                                            <div class="card-header card-header" data-background-color="gray">
+                                                <i class="material-icons pull-left">language</i>
+                                                <h4 style=" font-weight: 400;" class="card-title">Currently
+                                                    accepting deposits for Moonraker 1 from account: <i
+                                                        class="showAccount">You are not connected</i>
+                                                </h4>
+
+                                            </div>
+                                            <div class="card-content">
+                                                <div class="col-sm-7">
+                                                    <div class="container-fluid">
+                                                        <div class="row">
+                                                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                                                <div class="card" style="background-color:whitesmoke;">
+                                                                    <div class="card-header card-header-text"
+                                                                        data-background-color="green">
+                                                                        <h4 class="card-title">Staking</h4>
+                                                                        <span class="card-title"></span>
+                                                                        <p class="category"></p>
+                                                                    </div>
+                                                                    <div style="margin:20px;"
+                                                                        class="table-responsive table-sales">
+                                                                        <div class="card-content table-responsive">
+                                                                            <div class="card-content table-responsive">
+                                                                                <div class="row col-md-12">
+                                                                                    <div
+                                                                                        style="width:32%; display:inline-block; text-align: center;">
+                                                                                        Deposits
+                                                                                    </div>
+                                                                                    <div
+                                                                                        style="width:32%; display:inline-block; text-align: center;">
+                                                                                        Staking
+                                                                                    </div>
+                                                                                    <div
+                                                                                        style="width:32%; display:inline-block; text-align: center;">
+                                                                                        Redeem
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div class="row col-md-12">
+                                                                                <div class="progress"
+                                                                                    style="height: 15px;font-weight:600">
+                                                                                    <div id="deposit-indicator"
+                                                                                        class="progress-bar progress-bar-info"
+                                                                                        role="progressbar"
+                                                                                        style="width: 100%"
+                                                                                        aria-valuenow="0"
+                                                                                        aria-valuemin="0"
+                                                                                        aria-valuemax="100">
+                                                                                    </div>
+                                                                                    <div id="staking-indicator"
+                                                                                        class="progress-bar progress-bar-danger"
+                                                                                        role="progressbar"
+                                                                                        style="width: 0%"
+                                                                                        aria-valuenow="33"
+                                                                                        aria-valuemin="0"
+                                                                                        aria-valuemax="100">
+                                                                                    </div>
+                                                                                    <div id="redeem-indicator"
+                                                                                        class="progress-bar progress-bar-success"
+                                                                                        role="progressbar"
+                                                                                        style="width: 0%"
+                                                                                        aria-valuenow="33"
+                                                                                        aria-valuemin="0"
+                                                                                        aria-valuemax="100">
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div class="row">
+                                                                                <div class="row col-md-12"
+                                                                                    style="height: 100%;">
+                                                                                    <div
+                                                                                        class="table-responsive table-sales">
+                                                                                        <table
+                                                                                            class="table table-hover">
+                                                                                            <tbody>
+                                                                                                <div class="col-sm-12">
+                                                                                                    <div
+                                                                                                        class="form-group label-floating">
+                                                                                                        <label
+                                                                                                            class="control-label"
+                                                                                                            style="text-indent: 1em; ">
+                                                                                                            Enter amount
+                                                                                                            of tokens
+                                                                                                        </label>
+                                                                                                        <input
+                                                                                                            type="text"
+                                                                                                            style="width:100%; background-color:moccasin; padding: 6px 12px;"
+                                                                                                            class="form-control"
+                                                                                                            id="amount-to-stake-redeem"
+                                                                                                            aria-required="true"
+                                                                                                            required="true"
+                                                                                                            aria-invalid="false">
+                                                                                                    </div>
+                                                                                                    <button
+                                                                                                        style="background-color: green; font-size:large"
+                                                                                                        data-toggle="modal"
+                                                                                                        id="contribute"
+                                                                                                        class="btn btn-black"
+                                                                                                        disabled>
+                                                                                                        <i
+                                                                                                            class="material-icons">account_balance</i>
+                                                                                                        Stake
+                                                                                                    </button>
+                                                                                                    <button
+                                                                                                        style="background-color: black; font-size:large"
+                                                                                                        data-toggle="modal"
+                                                                                                        id="redeem"
+                                                                                                        class="btn btn-black"
+                                                                                                        disabled>
+                                                                                                        <i
+                                                                                                            class="material-icons">attach_money</i>
+                                                                                                        Take
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                                <div
+                                                                                                    class="ripple-container">
+                                                                                                </div>
+                                                                                                <div class="row col-md-7"
+                                                                                                    style="height: 100%;">
+                                                                                                </div>
+
+                                                                                            </tbody>
+                                                                                        </table>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="ripple-container">
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-sm-5">
+                                                    <div class="card" style="background: whitesmoke;">
+                                                        <div class="card-header" data-background-color="green">
+                                                            <h4 class="card-title">Capsule Info</h4>
+                                                            <p class="category"> Please connect to see the details </p>
+                                                        </div>
+                                                        <div class="card-content table-responsive table-full-width">
+                                                            <table class="table">
+                                                                <tbody style="  padding: 4px">
+                                                                    <tr>
+                                                                        <td>Total Staked:</td>
+                                                                        <td id="total-staked"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Your Contribution:</td>
+                                                                        <td id="your-contribution"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Outstanding:</td>
+                                                                        <td id="to-claim"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Your Total Return</td>
+                                                                        <td id="return"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Earning Ratio:</td>
+                                                                        <td id="earning-ratio"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Current block:</td>
+                                                                        <td id="current-block"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Start Block:</td>
+                                                                        <td id="start-block"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>End Block:</td>
+                                                                        <td id="end-block"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Rewards:</td>
+                                                                        <td id="rewards"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Total Released:</td>
+                                                                        <td id="total-released"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Total Cancelled:</td>
+                                                                        <td id="total-cancelled"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Balance of Staking Contract:</td>
+                                                                        <td id="contract-balance"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>My Balance of AUDT:</td>
+                                                                        <td id="token-balance"></td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="tab2">
+                        <div class="content">
+                            <div class="container-fluid">
+                                <div class="row">
+                                    <div class="col-md-12">
+
+                                        <br>
+                                        <div class="card">
+                                            <div class="card-header card-header" data-background-color="gray">
+                                                <!-- <i class="material-icons pull-left">language</i> -->
+                                                <h4 style=" font-weight: 400;" class="card-title">Awaiting
+                                                    Deployment</h4>
+                                            </div>
+                                            <div class="card-content">
+
+                                                <div class="row">
+                                                    <div class="col-md-12" style="overflow-y: scroll;">
+                                                        <!-- <i id="project-count-admin">Project Count :</i> -->
+                                                        <div class="table-responsive table-sales">
+
+                                                            <table class="table table-hover" id="projects-admin">
+                                                                <tbody>
+
+
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="tab-pane" id="tab3">
+                        <div class="content">
+                            <div class="container-fluid">
+                                <div class="row">
+                                    <div class="col-md-12">
+
+                                        <br>
+                                        <div class="card">
+                                            <div class="card-header card-header" data-background-color="gray">
+                                                <!-- <i class="material-icons pull-left">language</i> -->
+                                                <h4 style=" font-weight: 400;" class="card-title">Awaiting
+                                                    Deployment</h4>
+                                            </div>
+                                            <div class="card-content">
+
+                                                <div class="row">
+                                                    <div class="col-md-12" style="overflow-y: scroll;">
+                                                        <!-- <i id="project-count-other">Project Count :</i> -->
+                                                        <div style="table-layout: fixed;"
+                                                            class="table-responsive table-sales">
+
+                                                            <table class="table table-hover" id="projects_remaining">
+                                                                <tbody>
+
+
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- </div> -->
+
+                <!-- <div class="grid-content-projects-view"> -->
+
+
+            </div>
+
+
+            <div class="footer">FOOTER</div>
+
+
+        </div>
+
+
+        <!-- </form> -->
+    </div>
+    <!-- </div> -->
+
+
+
+
+
+
+    <!-- <div w3-include-html="modal_admin.html"></div> -->
+    <!-- <div w3-include-html="modal_member.html"></div> -->
+
+    <div id="admin-controls">
+    </div>
+
+    <div id="member-controls">
+    </div>
+
+    <script>
+
+        // includeHTML();
+
+
+
+
+        function openModalAdmin() {
+            document.getElementById("admin-navigation").style.width = "100%";
+        }
+
+        function closeModalAdmin() {
+            document.getElementById("admin-navigation").style.width = "0%";
+        }
+
+        function openModalMember() {
+            document.getElementById("member-navigation").style.width = "100%";
+            $("#idea-rbt").trigger("click");
+        }
+
+        function closeModalMember() {
+            document.getElementById("member-navigation").style.width = "0%";
+        }
+    </script>
+
+
+
+    <!-- Modal progress box start -->
+    <div class="modal fade" id="progress" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content box-window">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Blockchain process</h4>
+                    <span id="message-status-title"></span>
+                </div>
+                <div class="modal-body">
+                    <span id="message-status-body"></span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal progress box end -->
+
+
+
+
+
+    <!-- Modal content show -->
+    <div class="modal fade" id="show-content" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content box-window" style="background-color:#ddd">
+                <div class="modal-header" style="padding:20px 20px;">
+                    <div class="card">
+
+                        <div id="card-header" class="card-header" data-background-color="gray">
+
+                            <h4 class="card-title" id="content-card-header"></h4>
+                        </div>
+
+                        <div class="modal-body">
+
+
+                            <div id="content-to-show"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-gray btn-warning pull-right" data-dismiss="modal"><span
+                                class="glyphicon glyphicon-remove"></span> Close</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal content show end -->
+
+
+
+
+    <!-- <script src="../assets/js/provider.js"></script> -->
+    <script src="../assets/js/jquery.min.js"></script>
+    <script src="../assets/js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="../assets/js/moment.min.js"></script>
+    <script src="../assets/js/jquery.bootstrap-wizard.js"></script>
+    <script src="../assets/js/jquery.validate.min.js"></script>
+    <script src="../assets/js/script-1.js"></script>
+    <!-- library of function to render time passed since action was made -->
+    <script src="../assets/js/jquery.timeago.js" type="text/javascript"></script>
+
+    <!-- <script src="../assets/js/provider.js"></script> -->
+    <!-- DateTimePicker Plugin -->
+    <script src="../assets/js/bootstrap-datetimepicker.js"></script>
+    <script src="../assets/js/bootstrap-notify.js"></script>
+    <script src="../assets/js/jquery.cookie.js" type="text/javascript"></script>
+    <!-- Material Dashboard javascript methods -->
+    <!-- TagsInput Plugin -->
+    <script src="../assets/js/jquery.tagsinput.js"></script>
+    <script src="../assets/js/material.min.js" type="text/javascript"></script>
+    <script src="../assets/js/material-dashboard.js"></script>
+
+
+
+    <script type="text/javascript">
+
+        // $("#admin-controls").load("modal_admin.html"); 
+        // $("#member-controls").load("modal_member.html"); 
+
+        function autorun() {
+            init();
+
+        }
+        if (document.addEventListener) document.addEventListener("DOMContentLoaded", autorun, false);
+        else if (document.attachEvent) document.attachEvent("onreadystatechange", autorun);
+        else window.onload = autorun;
+
+
+
+    </script>
+
+
+</body>
+
+</html>

@@ -5,7 +5,9 @@
 let buildDir, configDir, account, gasPrice, gasAmount, secondsInBlock, earningRatio, receipts, stakingTokenSymbol,
     stakedAmount, totalReward, userHoldingsAUDT, conversionUSD_AUDT = 10, userHoldingsGovToken,
     startBlock, endBlock, tokenAddress, stakingAddress, stakingReceipt, governanceToken, selectedCapsule = 1,
-    govTokenRewardRatio, stakingStartTime, stakingEndTime, deploymentTime, deploymentStatus, chainId = "0x539";
+    govTokenRewardRatio, stakingStartTime, stakingEndTime, deploymentTime, deploymentStatus, chainId = "0x4";
+
+    // chainId = "0x539"
 
 async function init() {
 
@@ -279,7 +281,7 @@ async function loadPortfolio(selectedCapsule) {
     } else {
         $("#portfolio-value-to-take").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
         $("#taking-amount").val(receipts / Math.pow(10, 18));
-        $("#taking-amount").attr("disabled", true);
+        // $("#taking-amount").attr("disabled", true);
         $("#staking-amount").attr("disabled", true);
 
         $("#take-amount").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
