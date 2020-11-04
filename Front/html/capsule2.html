@@ -136,17 +136,26 @@
 
 
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        <!-- <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                             <i class="material-icons">view_carousel</i> 0.00000
                             <b class="caret"></b>
-                        </a>
+                        </a> -->
+                        <div id="status" style="display:none; background-color: white; color:black; width:150px;">
+                            <div id="address">x0dffd...| </div>
+                            <div id="holdings">2000 AUDT</div>
+                        </div>
 
                     </li>
 
                     <li>
-                        <a href="../examples/contact-us.html" target="_blank" class="btn btn-white btn-simple">
-                            <i class="material-icons">view_quilt</i> Connect
-                        </a>
+                        <!-- <a href="../examples/contact-us.html" target="_blank" class="btn btn-white btn-simple">
+                            <i class="material-icons">view_quilt</i> Connect a wallet
+                        </a> -->
+                        <button style="width:190px; height:40px; display:none; background-color: teal;"
+                            class="btn btn-gray enableEthereumButton pull-right" id="connect-metamask">
+                            <i style="font-size: 40px;" class="material-icons">touch_app</i>Connect a Wallet
+                        </button>
+
                     </li>
                 </ul>
             </div>
@@ -168,10 +177,7 @@
                         accepting deposits for Moonraker 1 from account: <i class="showAccount">You are not
                             connected</i>
                     </p>
-                    <button style="width:190px; height:40px; display:block; background-color: teal;"
-                        class="btn btn-gray enableEthereumButton pull-right" id="connect-metamask">
-                        <i style="font-size: 40px;" class="material-icons">touch_app</i>Connect a Wallet
-                    </button>
+
 
                 </div>
 
@@ -353,7 +359,7 @@
                                             <div id="current-value" class="col-md-12 col-sm-12 col-xs-12"
                                                 style="font-weight:bold;">0 AUDT</div>
                                         </div>
-                                        <div id="stake-progress" style="display:block" class="blink_me">Deposits in
+                                        <div style="display:block" class="blink_me">Deposits in
                                             progress</div>
                                         &nbsp;
                                     </div>
@@ -441,8 +447,7 @@
                                             <div id="your-receipts" class="pull-left"
                                                 style="width:50%; font-weight:bold;">0 AUDT</div>
                                         </div>
-                                        <div id="take-progress" style="display:block" class="blink_me">Staking in
-                                            progress</div>
+                                        <div style="display:block" class="blink_me"></div>
                                         &nbsp;
                                     </div>
                                     <!-- <p class="description text-center">Or Be Classical</p> -->
@@ -509,38 +514,29 @@
                                 </form>
                             </div>
                         </div>
-
                         <div class="tab-pane" id="pill3">
+                            <div class="card card-signup">
 
-                            <div class="col-md-12 col-sm-12 col-xs-12" style="height:40px; ">
+                                <div class="header  text-center" style="background-color: teal; color:white">
+                                    <!-- <h4 class="card-title">DAOCapsule 1</h4> -->
+                                    <div>
+                                        <div class="pull-left" style="width:50%">Mission Value</div>
+                                        <div class="pull-left" style="width:50%">&nbsp;</div>
+                                    </div>
 
-                                <div class="card card-signup">
-
-                                    <div class="header  text-center" style="background-color: teal; color:white">
-                                        <!-- <h4 class="card-title">DAOCapsule 1</h4> -->
-
-                                        <div class="col-md-12">
-                                            <div class="col-md-6 col-sm-6 col-xs-12">Mission Value</div>
-                                            <div class="col-md-6 col-sm-6 col-xs-12">
-
-                                            </div>
-                                        </div>
-                                        <div>
-
+                                    <div>
+                                        <div id="return-percentage" class="pull-left"
+                                            style="width:50%; font-weight:bold;">&nbsp;</div>
                                             <div id="return-percentage" class="pull-left"
-                                                style="width:50%; font-weight:bold;">0 AUDT</div>
-                                            <div id="your-receipts" class="pull-left"
-                                                style="width:50%; font-weight:bold;">&nbsp;</div>
-                                        </div>
+                                            style="width:50%; font-weight:bold;">&nbsp;</div>
 
-
-                                        <div id="take-progress" style="display:block" class="blink_me">Staking in
-                                            progress</div>
-                                        &nbsp;
 
                                     </div>
-                                    <!-- <p class="description text-center">Or Be Classical</p> -->
-                                    <div class="content"></div>
+                                    <div style="display:block" class="blink_me"></div>
+                                    &nbsp;
+                                </div>
+                                <!-- <p class="description text-center">Or Be Classical</p> -->
+                                <div class="content">
 
                                     <div class="card-content table-responsive"
                                         style="margin: auto;width: 80% !important; border-spacing: 2px;">
@@ -581,7 +577,8 @@
                                                 <tr style="background-color: rgb(160, 219, 221) ;">
                                                     <td style="text-align:left">My Current Reward</td>
                                                     <td id="tb-current-reward" style="text-align:right">0.00</td>
-                                                    <td id="tb-current-reward-usd" style="text-align:right">0.00</td>
+                                                    <td id="tb-current-reward-usd" style="text-align:right">0.00
+                                                    </td>
                                                 </tr>
                                                 <tr style="background-color: rgb(236, 236, 223);">
                                                     <td style="text-align:left">1 dAudt1</td>
@@ -602,6 +599,7 @@
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -752,7 +750,7 @@
                     <p>If you have more questions, don't hesitate to contact us or send us. We're here to help!</p>
                 </div>
                 <div class="modal-footer text-center">
-                    <button type="button" class="btn btn-info btn-round" data-dismiss="modal">Got it!</button>
+                    <button type="button" class="btn btn-info btn-round" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

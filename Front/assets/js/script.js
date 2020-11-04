@@ -14,7 +14,7 @@ async function init() {
 
 
     let test = ethereum.isMetaMask;
-    ethereum.autoRefreshOnNetworkChange = false;
+    // ethereum.autoRefreshOnNetworkChange = false;
 
     gasPrice = 20000000000;
     gasAmount = 4000000;
@@ -40,9 +40,12 @@ async function init() {
         if (chainIdCurrent != chainId) {
             showTimeNotification("top", "left", "You switched to unsupported network.");
             $(".enableEthereumButton").css("display", "none");
+            $("#content").css("display", "none");
+
         } else
             if (typeof window.ethereum !== 'undefined') {
                 console.log('MetaMask is installed!');
+                // $("#tabs").css("display", "block");
     
                 getAccount(1);
     
@@ -54,36 +57,40 @@ async function init() {
 
     if (typeof window.web3 === 'undefined') {
         showTimeNotification("top", "left", "Please enable metamask.");
+        $(".content").css("display", "none");
         return;
     }
-    else if (ethereum.selectedAddress == undefined) {
-        showTimeNotification("top", "left", "Please connect wallet.");
-        $(".widget").css("display", "none");
-        return;
-    } else if (ethereum.chainId != chainId) {       
-        $(".widget").css("display", "none");
+    else if (ethereum.selectedAddress == undefined && ethereum.chainId != chainId) {
         showTimeNotification("top", "left", "You are connected to unsupported network.");
+        $(".content").css("display", "none");
+        return;
+    } else if (ethereum.chainId != chainId) {              
+        showTimeNotification("top", "left", "You are connected to unsupported network.");
+        $(".content").css("display", "none");
         return;
     }
     else {
-        $(".widget").css("display", "block");
+        // $(".content").css("display", "block");
     }
 
 
     if (ethereum.selectedAddress != undefined) {
         console.log('MetaMask is installed!');
-        $(".widget").css("display", "block");
+        // $(".content").css("display", "block");
 
         getAccount(1);
 
-        var interval = setInterval(function () {
-            loadPortfolio(selectedCapsule).then(function (res, err) {
-                return displayProgress(selectedCapsule);
-            }).catch(function (res) {
+        // var interval = setInterval(function () {
+        //     loadPortfolio(selectedCapsule).then(function (res, err) {
+        //         return displayProgress(selectedCapsule);
+        //     }).catch(function (res) {
 
-                console.log(res);
-            })
-        }, 10000);
+        //         console.log(res);
+        //     })
+        // }, 10000);
+    } else{
+        $(".enableEthereumButton").css("display", "block");
+        $(".content").css("display", "none");
     }
 }
 
@@ -103,7 +110,10 @@ async function getAccount(capsuleNumber) {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     account = accounts[0];
     const showAccount = document.querySelector('.showAccount');
-    showAccount.innerHTML = account;
+    // showAccount.innerHTML = account;
+    // $("#address").html(account.substring(1, 10) + "...");
+    // $("#address").css("display", "block");
+
     // loadStats();
 
 
@@ -265,6 +275,7 @@ async function loadPortfolio(selectedCapsule) {
 
         $("#portfolio-value-to-take").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " AUDT");
         $("#take-apr").html("1.00%");
+        $("#staking-amount").attr("disabled", true);
     } else {
         $("#portfolio-value-to-take").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
         $("#taking-amount").val(receipts / Math.pow(10, 18));
@@ -275,6 +286,11 @@ async function loadPortfolio(selectedCapsule) {
         $("#take-apr").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ",") + "%");
         $("#take").css("display", "block");
     }
+
+    $("#address").html(account.substring(1, 10) + "...");
+    $("#holdings").html((Number(userHoldingsAUDT) / Math.pow(10, 18)).formatMoney(3, ".", ",") + " AUDT");
+    $("#status").css("display", "block");
+    $(".content").css("display", "block");
 
     populatePoolTable(selectedCapsule);
 }
@@ -291,24 +307,24 @@ async function updateCampaignProgress() {
         stakingPercentage = (blockNumber - stakingStartTime) / (stakingEndTime - stakingStartTime) * 100;
         // $("#deposit-progress").css("display", "none");
         if (stakingPercentage <= 100) {
-            $("#stake-progress").css("display", "block");
-            $("#take-progress").css("display", "block");
-            $("#stake-progress").text("Staking in progress " + Math.round(Number(stakingPercentage)) + " %");
-            $("#take-progress").text("Staking in progress " + Math.round(Number(stakingPercentage)) + " %");
+            $(".blink_me").css("display", "block");
+            // $("#take-progress").css("display", "block");
+            $(".blink_me").text("Staking in progress " + Math.round(Number(stakingPercentage)) + " %");
+            // $("#take-progress").text("Staking in progress " + Math.round(Number(stakingPercentage)) + " %");
         }
         else {
-            $("#stake-progress").css("display", "block");
-            $("#take-progress").css("display", "block");
-            $("#stake-progress").text("Redeeming in progress ");
-            $("#take-progress").text("Redeeming in progress ");
+            $(".blink_me").css("display", "block");
+            // $("#take-progress").css("display", "block");
+            $(".blink_me").text("Redeeming in progress ");
+            // $("#take-progress").text("Redeeming in progress ");
         }
     }
     else {
 
-        $("#stake-progress").css("display", "block");
-        $("#take-progress").css("display", "block");
-        $("#stake-progress").text("Deposits in progress " + Math.round(Number(depositPercentage)) + " %");
-        $("#take-progress").text("Deposits in progress " + Math.round(Number(depositPercentage)) + " %");
+        $(".blink_me").css("display", "block");
+        // $("#take-progress").css("display", "block");
+        $(".blink_me").text("Deposits in progress " + Math.round(Number(depositPercentage)) + " %");
+        // $("#take-progress").text("Deposits in progress " + Math.round(Number(depositPercentage)) + " %");
     }
 
     return [depositPercentage, stakingPercentage];
@@ -319,10 +335,10 @@ async function displayProgress(capsuleNumber) {
     let relativePercentageText;
     let relativeStakingPercentageText;
     let relativeRedeemPercentageText;
-    let stakingPercentage;
-    let relativeStakingPercentage;
-    let relativeRedeemPercentage;
-    let redeemPercentage;
+    let stakingPercentage =0;
+    let relativeStakingPercentage= 0;
+    let relativeRedeemPercentage=0;
+    let redeemPercentage=0;
 
     let blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
     let depositPercentage = (blockNumber - deploymentTime) / (stakingStartTime - deploymentTime) * 100;
@@ -332,7 +348,7 @@ async function displayProgress(capsuleNumber) {
         relativeDepositPercentage = 34;
         relativePercentageText = "100%";
         stakingPercentage = (blockNumber - stakingStartTime) / (stakingEndTime - stakingStartTime) * 100;
-        relativeStakingPercentage = Math.round(stakingPercentage / 3);
+        relativeStakingPercentage = Math.round(stakingPercentage / 3)>34?34:Math.round(stakingPercentage / 3);
         $("#contribute").attr("disabled", true);
         if (stakingPercentage >= 100) {
             relativeStakingPercentageText = "100%";
@@ -347,6 +363,7 @@ async function displayProgress(capsuleNumber) {
     } else {
         relativePercentageText = Math.round(depositPercentage) + "%";
         $("#contribute").attr("disabled", false);
+       
     }
 
     $('#deposit-indicator ').css({ 'width': relativeDepositPercentage + "%" });
@@ -639,8 +656,12 @@ $(document).on("click", "#mission-table tr", async function (e) {
     selectedCapsule++;
     let isDisabled = $('#m' + selectedCapsule).attr('disabled') ? true : false;
 
+
+    
+
     if (!isDisabled) {
 
+        $("#m" + selectedCapsule).prop("checked",true);
         $("#noticeModal").toggle();
         $("#noticeModal").modal('hide');
 
