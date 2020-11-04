@@ -7,14 +7,9 @@ let buildDir, configDir, account, gasPrice, gasAmount, secondsInBlock, earningRa
     startBlock, endBlock, tokenAddress, stakingAddress, stakingReceipt, governanceToken, selectedCapsule = 1,
     govTokenRewardRatio, stakingStartTime, stakingEndTime, deploymentTime, deploymentStatus, chainId = "0x4";
 
-    // chainId = "0x539"
+// chainId = "0x539"
 
 async function init() {
-
-
-
-
-
     let test = ethereum.isMetaMask;
     // ethereum.autoRefreshOnNetworkChange = false;
 
@@ -25,38 +20,6 @@ async function init() {
     configDir = "../../config/"
     selectedCapsule = 1;
 
-
-
-
-    const ethereumButton1 = document.querySelector('.enableEthereumButton');
-    const ethereumButton = document.querySelector('.enableEthereumButton');
-
-    ethereum.on('accountsChanged', function (accounts) {
-        // Time to reload your interface with accounts[0]!
-        console.log("accounts:" + accounts);
-        getAccount();
-    });
-
-    ethereum.on('chainChanged', function (chainIdCurrent) {
-        // window.location.reload();
-        if (chainIdCurrent != chainId) {
-            showTimeNotification("top", "left", "You switched to unsupported network.");
-            $(".enableEthereumButton").css("display", "none");
-            $("#content").css("display", "none");
-
-        } else
-            if (typeof window.ethereum !== 'undefined') {
-                console.log('MetaMask is installed!');
-                // $("#tabs").css("display", "block");
-    
-                getAccount(1);
-    
-            }
-        console.log("chain id:" + chainId);
-    });
-
-
-
     if (typeof window.web3 === 'undefined') {
         showTimeNotification("top", "left", "Please enable metamask.");
         $(".content").css("display", "none");
@@ -66,19 +29,17 @@ async function init() {
         showTimeNotification("top", "left", "You are connected to unsupported network.");
         $(".content").css("display", "none");
         return;
-    } else if (ethereum.chainId != chainId) {              
+    } else if (ethereum.chainId != chainId) {
         showTimeNotification("top", "left", "You are connected to unsupported network.");
         $(".content").css("display", "none");
         return;
+    } else if (ethereum.selectedAddress == undefined) {
+        $(".enableEthereumButton").css("display", "block");
+        return;
     }
-    else {
-        // $(".content").css("display", "block");
-    }
-
 
     if (ethereum.selectedAddress != undefined) {
         console.log('MetaMask is installed!');
-        // $(".content").css("display", "block");
 
         getAccount(1);
 
@@ -90,21 +51,18 @@ async function init() {
         //         console.log(res);
         //     })
         // }, 10000);
-    } else{
+    } else {
         $(".enableEthereumButton").css("display", "block");
         $(".content").css("display", "none");
     }
 }
 
-
-// For now, 'eth_accounts' will continue to always return an array
 function handleAccountsChanged(accounts) {
     if (accounts.length === 0) {
         // MetaMask is locked or the user has not connected any accounts
         console.log('Please connect to MetaMask.');
     } else if (accounts[0] !== account) {
         account = accounts[0];
-        // Do any other work!
     }
 }
 
@@ -112,28 +70,17 @@ async function getAccount(capsuleNumber) {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     account = accounts[0];
     const showAccount = document.querySelector('.showAccount');
-    // showAccount.innerHTML = account;
-    // $("#address").html(account.substring(1, 10) + "...");
-    // $("#address").css("display", "block");
-
-    // loadStats();
-
-
     $(".enableEthereumButton").css("display", "none");
 
-    // loadStats();
-    loadContracts(1).then({
-
+    loadContract(1).then({
     }).then(function (res, err) {
         return loadPortfolio(selectedCapsule);
     }).then(function (res, err) {
         displayProgress(1);
     }).catch(function (res) {
-
         console.log(res);
     })
 }
-
 
 
 async function loadConfig(fileName) {
@@ -157,7 +104,7 @@ async function loadConfig(fileName) {
 
 
 
-async function loadContracts(capsuleNumber) {
+async function loadContract(capsuleNumber) {
 
 
     let res = await loadConfig("airdrop" + capsuleNumber + ".json");
@@ -174,7 +121,7 @@ async function loadContracts(capsuleNumber) {
     stakingStartTime = STAKING_START_TIME;
     deploymentTime = DEPLOYMENT_TIME;
     deploymentStatus = DEPLOYMENT_STATUS;
-    govTokenRewardRatio=GOVERNANCE_TOKEN_REWARD_RATIO;
+    govTokenRewardRatio = GOVERNANCE_TOKEN_REWARD_RATIO;
 
 }
 
@@ -281,7 +228,6 @@ async function loadPortfolio(selectedCapsule) {
     } else {
         $("#portfolio-value-to-take").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
         $("#taking-amount").val(receipts / Math.pow(10, 18));
-        // $("#taking-amount").attr("disabled", true);
         $("#staking-amount").attr("disabled", true);
 
         $("#take-amount").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
@@ -298,7 +244,6 @@ async function loadPortfolio(selectedCapsule) {
 }
 
 
-
 async function updateCampaignProgress() {
 
     let stakingPercentage;
@@ -307,26 +252,19 @@ async function updateCampaignProgress() {
 
     if (depositPercentage >= 100) {
         stakingPercentage = (blockNumber - stakingStartTime) / (stakingEndTime - stakingStartTime) * 100;
-        // $("#deposit-progress").css("display", "none");
         if (stakingPercentage <= 100) {
             $(".blink_me").css("display", "block");
-            // $("#take-progress").css("display", "block");
             $(".blink_me").text("Staking in progress " + Math.round(Number(stakingPercentage)) + " %");
-            // $("#take-progress").text("Staking in progress " + Math.round(Number(stakingPercentage)) + " %");
         }
         else {
             $(".blink_me").css("display", "block");
-            // $("#take-progress").css("display", "block");
             $(".blink_me").text("Redeeming in progress ");
-            // $("#take-progress").text("Redeeming in progress ");
         }
     }
     else {
 
         $(".blink_me").css("display", "block");
-        // $("#take-progress").css("display", "block");
         $(".blink_me").text("Deposits in progress " + Math.round(Number(depositPercentage)) + " %");
-        // $("#take-progress").text("Deposits in progress " + Math.round(Number(depositPercentage)) + " %");
     }
 
     return [depositPercentage, stakingPercentage];
@@ -337,10 +275,10 @@ async function displayProgress(capsuleNumber) {
     let relativePercentageText;
     let relativeStakingPercentageText;
     let relativeRedeemPercentageText;
-    let stakingPercentage =0;
-    let relativeStakingPercentage= 0;
-    let relativeRedeemPercentage=0;
-    let redeemPercentage=0;
+    let stakingPercentage = 0;
+    let relativeStakingPercentage = 0;
+    let relativeRedeemPercentage = 0;
+    let redeemPercentage = 0;
 
     let blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
     let depositPercentage = (blockNumber - deploymentTime) / (stakingStartTime - deploymentTime) * 100;
@@ -350,7 +288,7 @@ async function displayProgress(capsuleNumber) {
         relativeDepositPercentage = 34;
         relativePercentageText = "100%";
         stakingPercentage = (blockNumber - stakingStartTime) / (stakingEndTime - stakingStartTime) * 100;
-        relativeStakingPercentage = Math.round(stakingPercentage / 3)>34?34:Math.round(stakingPercentage / 3);
+        relativeStakingPercentage = Math.round(stakingPercentage / 3) > 34 ? 34 : Math.round(stakingPercentage / 3);
         $("#contribute").attr("disabled", true);
         if (stakingPercentage >= 100) {
             relativeStakingPercentageText = "100%";
@@ -365,7 +303,7 @@ async function displayProgress(capsuleNumber) {
     } else {
         relativePercentageText = Math.round(depositPercentage) + "%";
         $("#contribute").attr("disabled", false);
-       
+
     }
 
     $('#deposit-indicator ').css({ 'width': relativeDepositPercentage + "%" });
@@ -378,7 +316,6 @@ async function displayProgress(capsuleNumber) {
 }
 
 async function handleDeposit() {
-    //  e.preventDefault();
 
     $("#message-status-body").html("");
 
@@ -394,7 +331,6 @@ async function handleDeposit() {
             return loadPortfolio(selectedCapsule);
         }).then(function (res, err) {
             return displayProgress(selectedCapsule);
-
         }).catch(function (res) {
             console.log(res);
         })
@@ -404,7 +340,6 @@ async function handleDeposit() {
 function showTimeNotification(from, align, text) {
 
     let type = ['', 'info', 'success', 'warning', 'danger', 'rose', 'primary'];
-
     let color = Math.floor((Math.random() * 6) + 1);
 
     $.notify({
@@ -555,7 +490,6 @@ function redeem() {
 
                             if (res) {
                                 progressAction("You have successfully returned " + stakingTokenSymbol + " tokens and  have received " + (logValues.args.amount / Math.pow(10, 18)).formatMoney(2, ".", ",") + " AUDT Tokens.", 2, id, true);
-                                // loadStats();
                                 resolve(res);
                             }
                         });
@@ -658,35 +592,51 @@ $(document).on("click", "#mission-table tr", async function (e) {
     selectedCapsule++;
     let isDisabled = $('#m' + selectedCapsule).attr('disabled') ? true : false;
 
-
-    
-
     if (!isDisabled) {
 
-        $("#m" + selectedCapsule).prop("checked",true);
+        $("#m" + selectedCapsule).prop("checked", true);
         $("#noticeModal").toggle();
         $("#noticeModal").modal('hide');
 
         $("#moonraker").html("MOONRAKER " + (selectedCapsule));
-        loadContracts(selectedCapsule).then({
+        loadContract(selectedCapsule).then({
 
         }).then(function (res, err) {
             return loadPortfolio(selectedCapsule);
-
         }).then(function (res, err) {
             return displayProgress(selectedCapsule);
-
         }).catch(function (res) {
-
             console.log(res);
         })
     }
 })
 
 
+ethereum.on('accountsChanged', function (accounts) {
+    // Time to reload your interface with accounts[0]!
+    console.log("accounts:" + accounts);
+    getAccount();
+});
+
+ethereum.on('chainChanged', function (chainIdCurrent) {
+    // window.location.reload();
+    if (chainIdCurrent != chainId) {
+        showTimeNotification("top", "left", "You switched to unsupported network.");
+        $(".enableEthereumButton").css("display", "none");
+        $("#content").css("display", "none");
+
+    } else if (typeof window.ethereum !== 'undefined') {
+        console.log('MetaMask is installed!');
+        getAccount(1);
+    }
+    console.log("chain id:" + chainId);
+});
+
 
 
 $(document).ready(function () {
+
+
     $(".enableEthereumButton").click(function () {
         getAccount();
     })
@@ -707,9 +657,8 @@ $(document).ready(function () {
             $("#msg-error-stake").html("");
             if (Number(this.value) > 0) {
                 $("#contribute").css("display", "block");
-                // $('#take-amount').text((Number(this.value)).formatMoney(2, ".", ",") + " AUDT");
             }
-        }       
+        }
 
     });
 
@@ -731,17 +680,13 @@ $(document).ready(function () {
     });
 
     $("#contribute").click(function () {
-
         handleDeposit().then(function () {
-
         });
     });
 
     $("#take").click(function () {
-
         redeem().then(function () {
             return loadPortfolio(selectedCapsule);
-
         });
     });
 
@@ -749,16 +694,15 @@ $(document).ready(function () {
         let res = await loadConfig("deploymentStatus.json");
         let actual_JSON = JSON.parse(res);
         const { DEPLOYMENT_STATUS_1, DEPLOYMENT_STATUS_2, DEPLOYMENT_STATUS_3, DEPLOYMENT_STATUS_4 } = actual_JSON;
-        $("#capsule1-status").text(DEPLOYMENT_STATUS_1 ? "Deployed" : "NotDeployed");
-        $("#capsule2-status").text(DEPLOYMENT_STATUS_2 ? "Deployed" : "NotDeployed");
-        $("#capsule3-status").text(DEPLOYMENT_STATUS_3 ? "Deployed" : "NotDeployed");
-        $("#capsule4-status").text(DEPLOYMENT_STATUS_4 ? "Deployed" : "NotDeployed");
+        $("#capsule1-status").text(DEPLOYMENT_STATUS_1 ? "Deployed" : "Not Deployed");
+        $("#capsule2-status").text(DEPLOYMENT_STATUS_2 ? "Deployed" : "Not Deployed");
+        $("#capsule3-status").text(DEPLOYMENT_STATUS_3 ? "Deployed" : "Not Deployed");
+        $("#capsule4-status").text(DEPLOYMENT_STATUS_4 ? "Deployed" : "Not Deployed");
 
         $("#m1").attr('disabled', DEPLOYMENT_STATUS_1 ? false : true);
         $("#m2").attr('disabled', DEPLOYMENT_STATUS_2 ? false : true);
         $("#m3").attr('disabled', DEPLOYMENT_STATUS_3 ? false : true);
         $("#m4").attr('disabled', DEPLOYMENT_STATUS_4 ? false : true);
-
         $("#noticeModal").modal();
     });
 
