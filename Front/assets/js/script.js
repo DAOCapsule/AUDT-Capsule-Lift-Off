@@ -207,7 +207,7 @@ async function loadPortfolio(selectedCapsule) {
     $("#your-receipts").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " " + stakingTokenSymbol);
     // $("#taking-amount").attr("placeholder", "Enter amount of " + stakingTokenSymbol + " to redeem..");
 
-    $("#stake-apr").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ",") + "%");
+    $("#stake-apr").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ","));
     $("#staking-amount").val("");
     $("#contribute").css("display", "none");
     $("#earned-amount").text("0.00 AUDT  ");
@@ -218,13 +218,13 @@ async function loadPortfolio(selectedCapsule) {
 
     if (progress[0] <= 100) {
         $("#portfolio-value-to-take").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " AUDT");
-        $("#take-apr").html("1.00%");
+        $("#take-apr").html("1.00");
         $("#staking-amount").attr("disabled", false);
     }
     else if (progress[1] <= 100) {
 
         $("#portfolio-value-to-take").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " AUDT");
-        $("#take-apr").html("1.00%");
+        $("#take-apr").html("1.00");
         $("#staking-amount").attr("disabled", true);
     } else {
         $("#portfolio-value-to-take").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
@@ -232,7 +232,7 @@ async function loadPortfolio(selectedCapsule) {
         $("#staking-amount").attr("disabled", true);
 
         $("#take-amount").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
-        $("#take-apr").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ",") + "%");
+        $("#take-apr").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ",") );
         $("#take").css("display", "block");
     }
 
@@ -659,7 +659,7 @@ $(document).ready(function () {
     $("#staking-amount").keyup(function () {
 
         earningRatio = 1 + ((Number(totalReward) * Math.pow(10, 18)) / (Number(stakedAmount) + (Number(this.value) * Math.pow(10, 18))) / Math.pow(10, 18));
-        $('#stake-apr').text((Number(earningRatio)).formatMoney(2, ".", ",") + "%");
+        $('#stake-apr').text((Number(earningRatio)).formatMoney(2, ".", ",") );
         $('#earned-amount').text(((Number(this.value) * earningRatio)).formatMoney(2, ".", ",") + " AUDT");
 
         if (Number(this.value) > Number(userHoldingsAUDT / Math.pow(10, 18))) {
