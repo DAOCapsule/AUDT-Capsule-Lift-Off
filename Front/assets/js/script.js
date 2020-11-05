@@ -219,6 +219,7 @@ async function loadPortfolio(selectedCapsule) {
     if (progress[0] <= 100) {
         $("#portfolio-value-to-take").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " AUDT");
         $("#take-apr").html("1.00%");
+        $("#staking-amount").attr("disabled", false);
     }
     else if (progress[1] <= 100) {
 
@@ -333,8 +334,9 @@ async function handleDeposit() {
             return displayProgress(selectedCapsule);
         }).catch(function (res) {
             console.log(res);
+            progressAction(res.message, 2, 2, true, true);
         })
-}
+}   
 
 
 function showTimeNotification(from, align, text) {
@@ -395,7 +397,7 @@ function preauthorizeAUDT(amount) {
                     log.stopWatching(function (error, res) { });
                 });
             } else {
-                console.error(error);
+                console.error(error);               
                 reject(error);
             }
         });
@@ -615,7 +617,14 @@ $(document).on("click", "#mission-table tr", async function (e) {
 ethereum.on('accountsChanged', function (accounts) {
     // Time to reload your interface with accounts[0]!
     console.log("accounts:" + accounts);
-    getAccount();
+    if (accounts[0] == undefined) {
+        console.log("disconnected no account");
+        $("#status").css("display", "none");
+        $(".enableEthereumButton").css("display", "block");
+        $(".content").css("display", "none");
+    }
+    else
+        getAccount();
 });
 
 ethereum.on('chainChanged', function (chainIdCurrent) {
@@ -623,7 +632,8 @@ ethereum.on('chainChanged', function (chainIdCurrent) {
     if (chainIdCurrent != chainId) {
         showTimeNotification("top", "left", "You switched to unsupported network.");
         $(".enableEthereumButton").css("display", "none");
-        $("#content").css("display", "none");
+        $(".content").css("display", "none");
+
 
     } else if (typeof window.ethereum !== 'undefined') {
         console.log('MetaMask is installed!');
@@ -632,6 +642,11 @@ ethereum.on('chainChanged', function (chainIdCurrent) {
     console.log("chain id:" + chainId);
 });
 
+
+ethereum.on('disconnect', function(error) {
+
+    console.log("Disconnected." + error);
+})
 
 
 $(document).ready(function () {
@@ -687,7 +702,12 @@ $(document).ready(function () {
     $("#take").click(function () {
         redeem().then(function () {
             return loadPortfolio(selectedCapsule);
+        }).catch(function (res) {
+            console.log(res);
+            progressAction(res.message, 2, 2, true, true);
         });
+
+        
     });
 
     $("#change-mission").click(async function () {
