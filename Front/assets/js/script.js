@@ -2,10 +2,12 @@
 
 
 
-let buildDir, configDir, account, gasPrice, gasAmount, secondsInBlock, earningRatio, receipts, stakingTokenSymbol,
+
+
+let buildDir, configDir, account, gasPrice, gasAmount, secondsInBlock, earningRatio, receipts, stakingTokenSymbol, stakingTokenName,
     stakedAmount, totalReward, userHoldingsAUDT, conversionUSD_AUDT = 10, userHoldingsGovToken,
     startBlock, endBlock, tokenAddress, stakingAddress, stakingReceipt, governanceToken, selectedCapsule = 1,
-    govTokenRewardRatio, stakingStartTime, stakingEndTime, deploymentTime, deploymentStatus, chainId = "0x4";
+    govTokenRewardRatio, stakingStartTime, stakingEndTime, blockNumber, deploymentTime, deploymentStatus, chainId = "0x4";
 
 // chainId = "0x539"
 
@@ -121,35 +123,40 @@ async function loadContract(capsuleNumber) {
     stakingStartTime = STAKING_START_TIME;
     deploymentTime = DEPLOYMENT_TIME;
     deploymentStatus = DEPLOYMENT_STATUS;
-    govTokenRewardRatio = GOVERNANCE_TOKEN_REWARD_RATIO;
+    let govTokenRewardRatioBig = GOVERNANCE_TOKEN_REWARD_RATIO;
+
+    govTokenRewardRatio = new Decimal(Number(govTokenRewardRatioBig)).dividedBy(Math.pow(10,18));
 
 }
 
 
 async function populatePoolTable(capsuleNumber) {
 
-    let blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
+    blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
 
-    $("#tb-mission-reward").html((Number(totalReward) / Math.pow(10, 18)).formatMoney(2, ".", ","));
-    $("#tb-mission-reward-usd").html((Number(totalReward) / Math.pow(10, 18) / conversionUSD_AUDT).formatMoney(2, ".", ","));
-    $("#tb-total-staked").html((Number(stakedAmount) / Math.pow(10, 18)).formatMoney(2, ".", ","));
-    $("#tb-total-staked-usd").html((Number(stakedAmount) / Math.pow(10, 18) / conversionUSD_AUDT).formatMoney(2, ".", ","));
-    $("#tb-my-stake").html((Number(receipts) / Math.pow(10, 18)).formatMoney(2, ".", ","));
-    $("#tb-my-stake-usd").html((Number(receipts) / Math.pow(10, 18) / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-mission-reward").html((Number(totalReward)).formatMoney(2, ".", ","));
+    $("#tb-mission-reward-usd").html((totalReward  / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-total-staked").html((Number(stakedAmount)).formatMoney(2, ".", ","));
+    $("#tb-total-staked-usd").html((stakedAmount  / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-my-stake").html((Number(receipts)).formatMoney(2, ".", ","));
+    $("#tb-my-stake-usd").html((receipts / conversionUSD_AUDT).formatMoney(2, ".", ","));
 
-    $("#tb-current-reward").html((Number(receipts) / Math.pow(10, 36) * earningRatio).formatMoney(2, ".", ","));
-    $("#tb-current-reward-usd").html((Number(receipts) / Math.pow(10, 36) * earningRatio / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-current-reward").html((receipts *earningRatio).formatMoney(2, ".", ","));
+    $("#tb-current-reward-usd").html((receipts * earningRatio / conversionUSD_AUDT).formatMoney(2, ".", ","));
 
-    $("#tb-ratio").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ","));
-    $("#tb-ratio-usd").html((earningRatio / Math.pow(10, 18) / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-ratio").html((Number(earningRatio )).formatMoney(2, ".", ","));
+    $("#tb-ratio-usd").html((earningRatio  / conversionUSD_AUDT).formatMoney(2, ".", ","));
 
-    $("#tb-governance-token").html((Number(govTokenRewardRatio) * Number(receipts) / Math.pow(10, 36)).formatMoney(2, ".", ","));
-    $("#tb-governance-token-usd").html((Number(govTokenRewardRatio) * Number(receipts) / Math.pow(10, 36) / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-governance-token").html((govTokenRewardRatio * receipts).formatMoney(2, ".", ",") + " DCAP");
+    $("#tb-governance-token-usd").html((govTokenRewardRatio * receipts / conversionUSD_AUDT).formatMoney(2, ".", ",") + " USD");
+    $("#tb-governance-token-issued").html("(Total DCAP Mined at Expiration&nbsp " + (govTokenRewardRatio * stakedAmount).formatMoney(2, ".", ",") + ")");
 
-    $("#return-percentage").html((((earningRatio / Math.pow(10, 18)) - 1) * 100).formatMoney(2, ".", ",") + "%");
-    $("#current-block").html("Now Block:" + blockNumber);
-    $("#start-block").html("Start Block:" + startBlock);
-    $("#end-block").html("End Block:" + endBlock);
+    $("#return-percentage").html(((Number(earningRatio)  - 1) * 100).formatMoney(2, ".", ",") + "%");
+    $("#current-block").html("<b>Now Block:</b>" + blockNumber);
+    $("#start-block").html("<b>Start Block:</b>" + startBlock);
+    $("#end-block").html("<b>End Block:</b>" + endBlock);
+
+    $("#dAudt-version").html("1 " + stakingTokenName +"=");
 
 }
 
@@ -166,7 +173,9 @@ async function loadPortfolio(selectedCapsule) {
     let contract = web3.eth.contract(actual_JSON["abi"]);
     let stakingContractHandle = contract.at(stakingAddress);
 
-    earningRatio = await promisify(cb => stakingContractHandle.returnEarningRatio(cb));
+    let earningRatioBig = await promisify(cb => stakingContractHandle.returnEarningRatio(cb));
+
+    earningRatio = new Decimal(Number(earningRatioBig)).dividedBy(Math.pow(10,18)); 
 
     // process staking token 
     res = await loadJSON("StakingToken.json");
@@ -175,13 +184,21 @@ async function loadPortfolio(selectedCapsule) {
     contract = web3.eth.contract(actual_JSON["abi"]);
     let stakingTokenContractHandle = contract.at(stakingReceipt);
 
-    receipts = await promisify(cb => stakingTokenContractHandle.balanceOf(account, cb));
+    let receiptsBig = await promisify(cb => stakingTokenContractHandle.balanceOf(account, cb));
     stakingTokenSymbol = await promisify(cb => stakingTokenContractHandle.symbol(cb));
-    let earningsPerAmount = await promisify(cb => stakingContractHandle.returnEarningsPerAmount(receipts, cb));
-    stakedAmount = await promisify(cb => stakingContractHandle.stakedAmount(cb));
-    totalReward = await promisify(cb => stakingContractHandle.totalReward(cb));
+    stakingTokenName = await promisify(cb => stakingTokenContractHandle.name(cb));
+    let earningsPerAmountBig = await promisify(cb => stakingContractHandle.returnEarningsPerAmount(receiptsBig, cb));
+    let stakedAmountBig = await promisify(cb => stakingContractHandle.stakedAmount(cb));
+    let totalRewardBig = await promisify(cb => stakingContractHandle.totalReward(cb));
     startBlock = await promisify(cb => stakingContractHandle.stakingDateStart(cb));
     endBlock = await promisify(cb => stakingContractHandle.stakingDateEnd(cb));
+
+    totalReward = new Decimal(Number(totalRewardBig)).dividedBy(Math.pow(10,18)).toNumber(); 
+    stakedAmount = new Decimal(Number(stakedAmountBig)).dividedBy(Math.pow(10,18)).toNumber(); 
+    let earningsPerAmount = new Decimal(Number(earningsPerAmountBig)).dividedBy(Math.pow(10,18)).toNumber(); 
+
+    // convert safely to decimal value
+    receipts = new Decimal(Number(receiptsBig)).dividedBy(Math.pow(10,18)).toNumber(); 
 
 
     // process AUDT token
@@ -191,7 +208,10 @@ async function loadPortfolio(selectedCapsule) {
     contract = web3.eth.contract(actual_JSON["abi"]);
     let AUDTContractHandle = contract.at(tokenAddress);
 
-    userHoldingsAUDT = await promisify(cb => AUDTContractHandle.balanceOf(account, cb));
+    let userHoldingsAUDTBig = await promisify(cb => AUDTContractHandle.balanceOf(account, cb));
+
+    userHoldingsAUDT = new Decimal(Number(userHoldingsAUDTBig)).dividedBy(Math.pow(10,18)); 
+
 
     // process Governance Token
 
@@ -202,12 +222,13 @@ async function loadPortfolio(selectedCapsule) {
 
     userHoldingsGovToken = await promisify(cb => GovernanceContractHandle.balanceOf(account, cb));
 
-    $("#current-value").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " AUDT");
-    $("#portfolio-value").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
-    $("#your-receipts").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " " + stakingTokenSymbol);
+    $("#current-value").html(formatNumber(receipts) + " AUDT");
+    $("#portfolio-value").html(formatNumber(earningsPerAmount) + " AUDT");
+    $("#dcap-value").html((formatNumber(govTokenRewardRatio * receipts)) + " DCAP");
+    $("#your-receipts").html(formatNumber(receipts) + " " + stakingTokenSymbol);
     // $("#taking-amount").attr("placeholder", "Enter amount of " + stakingTokenSymbol + " to redeem..");
 
-    $("#stake-apr").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ","));
+    $("#stake-apr").html((Number(earningRatio)).formatMoney(2, ".", ","));
     $("#staking-amount").val("");
     $("#contribute").css("display", "none");
     $("#earned-amount").text("0.00 AUDT  ");
@@ -217,27 +238,34 @@ async function loadPortfolio(selectedCapsule) {
     $("#take-amount").text("0.00 AUDT  ");
 
     if (progress[0] <= 100) {
-        $("#portfolio-value-to-take").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " AUDT");
+        $("#portfolio-value-to-take").html(formatNumber(receipts) + " AUDT");
+        $("#dcap-to-take").html("0 DCAP");
         $("#take-apr").html("1.00");
         $("#staking-amount").attr("disabled", false);
     }
     else if (progress[1] <= 100) {
 
-        $("#portfolio-value-to-take").html(formatNumber(Number(receipts) / Math.pow(10, 18)) + " AUDT");
+        $("#portfolio-value-to-take").html(formatNumber(receipts) + " AUDT");
+        $("#dcap-to-take").html("0 DCAP");
         $("#take-apr").html("1.00");
         $("#staking-amount").attr("disabled", true);
     } else {
-        $("#portfolio-value-to-take").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
-        $("#taking-amount").val(receipts / Math.pow(10, 18));
+        $("#portfolio-value-to-take").html(formatNumber(earningsPerAmount) + " AUDT");      
+        if (receipts > 0 )  {
+            $("#dcap-to-take").html(formatNumber(govTokenRewardRatio * receipts) + " DCAP");
+            $("#taking-amount").val(receipts);
+            $("#take").css("display", "block");
+        }
+        // $("#taking-amount").val(y.toString());
         $("#staking-amount").attr("disabled", true);
 
-        $("#take-amount").html(formatNumber(Number(earningsPerAmount) / Math.pow(10, 18)) + " AUDT");
-        $("#take-apr").html((earningRatio / Math.pow(10, 18)).formatMoney(2, ".", ",") );
-        $("#take").css("display", "block");
+        $("#take-amount").html(formatNumber(earningsPerAmount) + " AUDT");
+        $("#take-apr").html((Number(earningRatio)).formatMoney(2, ".", ","));
+        // $("#take").css("display", "block");
     }
 
     $("#address").html(account.substring(1, 10) + "...");
-    $("#holdings").html((Number(userHoldingsAUDT) / Math.pow(10, 18)).formatMoney(3, ".", ",") + " AUDT");
+    $("#holdings").html((Number(userHoldingsAUDT)).formatMoney(3, ".", ",") + " AUDT");
     $("#status").css("display", "block");
     $(".content").css("display", "block");
 
@@ -255,7 +283,7 @@ async function updateCampaignProgress() {
         stakingPercentage = (blockNumber - stakingStartTime) / (stakingEndTime - stakingStartTime) * 100;
         if (stakingPercentage <= 100) {
             $(".blink_me").css("display", "block");
-            $(".blink_me").text("Staking in progress " + Math.round(Number(stakingPercentage)) + " %");
+            $(".blink_me").text("Staking in progress " + Math.round(stakingPercentage) + " %");
         }
         else {
             $(".blink_me").css("display", "block");
@@ -265,7 +293,7 @@ async function updateCampaignProgress() {
     else {
 
         $(".blink_me").css("display", "block");
-        $(".blink_me").text("Deposits in progress " + Math.round(Number(depositPercentage)) + " %");
+        $(".blink_me").text("Deposits in progress " + Math.round(depositPercentage) + " %");
     }
 
     return [depositPercentage, stakingPercentage];
@@ -336,7 +364,7 @@ async function handleDeposit() {
             console.log(res);
             progressAction(res.message, 2, 2, true, true);
         })
-}   
+}
 
 
 function showTimeNotification(from, align, text) {
@@ -369,7 +397,7 @@ function preauthorizeAUDT(amount) {
         let actual_JSON = JSON.parse(res);
         let contract = web3.eth.contract(actual_JSON["abi"]);
         let contractHandle = contract.at(tokenAddress);
-        valueToStake = Number($("#staking-amount").val()) * Math.pow(10, 18);
+        valueToStake = new Decimal(Number($("#staking-amount").val())).mul( Math.pow(10, 18)).toNumber();
 
         let id = progressAction("Pre authorizing AUDT tokens", 1, "", false, true);
 
@@ -397,7 +425,7 @@ function preauthorizeAUDT(amount) {
                     log.stopWatching(function (error, res) { });
                 });
             } else {
-                console.error(error);               
+                console.error(error);
                 reject(error);
             }
         });
@@ -413,7 +441,7 @@ function depositAUDT() {
         let actual_JSON = JSON.parse(res);
         let contract = web3.eth.contract(actual_JSON["abi"]);
         let contractHandle = contract.at(stakingAddress);
-        var valueToStake = $("#staking-amount").val() * Math.pow(10, 18);
+        var valueToStake = new Decimal( $("#staking-amount").val()).mul( Math.pow(10, 18)).toNumber();
         var logValues;
         var id = progressAction("Staking AUDT", 1, "", false, false);
 
@@ -437,7 +465,7 @@ function depositAUDT() {
                         log.stopWatching(function (error, res) {
 
                             if (res) {
-                                progressAction("You have successfully deposited AUDT tokens and  have received " + (logValues.args.amount / Math.pow(10, 18)).formatMoney(2, ".", ",") + " Staking Tokens.", 2, id, true);
+                                progressAction("You have successfully deposited AUDT tokens and  have received " + ( Number(new Decimal(logValues.args.amount.toString()).dividedBy( Math.pow(10, 18)))).formatMoney(2, ".", ",") + " Staking Tokens.", 2, id, true);
                                 resolve(res);
                                 log.stopWatching(function (error, res) { });
                             }
@@ -467,9 +495,9 @@ function redeem() {
         let actual_JSON = JSON.parse(res);
         let contract = web3.eth.contract(actual_JSON["abi"]);
         let contractHandle = contract.at(stakingAddress);
-        let valueToRedeem = $("#taking-amount").val() * Math.pow(10, 18);
+        let valueToRedeem = new Decimal($("#taking-amount").val()).mul( Math.pow(10, 18)).toNumber();
         let logValues;
-        let id = progressAction("Redeeming AUDT", 1, "", false, true);
+        let id = progressAction("Redeeming " + $("#taking-amount").val() + " " + stakingTokenSymbol, 1, "", false, true);
 
         contractHandle.redeem(valueToRedeem, {
             from: account
@@ -491,7 +519,7 @@ function redeem() {
                         log.stopWatching(function (error, res) {
 
                             if (res) {
-                                progressAction("You have successfully returned " + stakingTokenSymbol + " tokens and  have received " + (logValues.args.amount / Math.pow(10, 18)).formatMoney(2, ".", ",") + " AUDT Tokens.", 2, id, true);
+                                progressAction("You have successfully returned " + $("#taking-amount").val() + " " + stakingTokenSymbol + " and have received " + ( Number(new Decimal(logValues.args.amount.toString()).dividedBy( Math.pow(10, 18)))).formatMoney(2, ".", ",")  + " AUDT.", 2, id, true);
                                 resolve(res);
                             }
                         });
@@ -643,7 +671,7 @@ ethereum.on('chainChanged', function (chainIdCurrent) {
 });
 
 
-ethereum.on('disconnect', function(error) {
+ethereum.on('disconnect', function (error) {
 
     console.log("Disconnected." + error);
 })
@@ -658,13 +686,16 @@ $(document).ready(function () {
 
     $("#staking-amount").keyup(function () {
 
-        earningRatio = 1 + ((Number(totalReward) * Math.pow(10, 18)) / (Number(stakedAmount) + (Number(this.value) * Math.pow(10, 18))) / Math.pow(10, 18));
-        $('#stake-apr').text((Number(earningRatio)).formatMoney(2, ".", ",") );
-        $('#earned-amount').text(((Number(this.value) * earningRatio)).formatMoney(2, ".", ",") + " AUDT");
+        if (stakedAmount == undefined)
+            stakedAmount = 1;
 
-        if (Number(this.value) > Number(userHoldingsAUDT / Math.pow(10, 18))) {
+        let earningRatioTemp = 1 + (Number(totalReward) / (Number(stakedAmount) + (Number(this.value))));
+        $('#stake-apr').text((earningRatioTemp).formatMoney(2, ".", ","));
+        $('#earned-amount').text(((Number(this.value) * earningRatioTemp)).formatMoney(2, ".", ",") + " AUDT");
+
+        if (Number(this.value) > userHoldingsAUDT ) {
             $("#msg-error-stake").css("background-color", "lightyellow");
-            $("#msg-error-stake").html("You've exceeded number of available AUDT tokens.");
+            $("#msg-error-stake").html("Insufficient Balance.");
             $("#contribute").css("display", "none");
         }
         else {
@@ -679,9 +710,9 @@ $(document).ready(function () {
 
     $("#taking-amount").keyup(function () {
 
-        if (Number(this.value) > Number(receipts / Math.pow(10, 18))) {
+        if (Number(this.value) > receipts) {
             $("#msg-error-take").css("background-color", "lightyellow");
-            $("#msg-error-take").html("You've exceeded number of available receipts");
+            $("#msg-error-take").html("Insufficient Balance.");
             $("#take").css("display", "none");
         }
         else {
@@ -689,7 +720,10 @@ $(document).ready(function () {
             $("#msg-error-take").html("");
             if (Number(this.value) > 0) {
                 $("#take").css("display", "block");
-                $('#take-amount').text((Number(this.value)).formatMoney(2, ".", ",") + " AUDT");
+                if (blockNumber - stakingEndTime >= 0)
+                    $('#take-amount').text(((Number(this.value) * earningRatio)).formatMoney(2, ".", ",") + " AUDT");
+                else
+                    $('#take-amount').text((Number(this.value)).formatMoney(2, ".", ",") + " AUDT");
             }
         }
     });
@@ -707,7 +741,7 @@ $(document).ready(function () {
             progressAction(res.message, 2, 2, true, true);
         });
 
-        
+
     });
 
     $("#change-mission").click(async function () {

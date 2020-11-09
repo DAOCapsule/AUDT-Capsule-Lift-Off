@@ -1512,7 +1512,7 @@ contract GovernanceToken is
     }
 
     /// @dev Constructor that gives msg.sender all of existing tokens and initiates token.
-    constructor() public ERC20("DAO Capsule", "DAO-C") {
+    constructor() public ERC20("DAO Capsule", "DCAP") {
         _mint(msg.sender, INITIAL_SUPPLY);      
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
