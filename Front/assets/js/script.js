@@ -650,6 +650,8 @@ ethereum.on('accountsChanged', function (accounts) {
         $("#status").css("display", "none");
         $(".enableEthereumButton").css("display", "block");
         $(".content").css("display", "none");
+        $(".take").css("display", "none");
+        $(".stake").css("display", "none");
     }
     else
         getAccount();
@@ -725,6 +727,8 @@ $(document).ready(function () {
                 else
                     $('#take-amount').text((Number(this.value)).formatMoney(2, ".", ",") + " AUDT");
             }
+            else 
+            $("#take").css("display", "none");
         }
     });
 
