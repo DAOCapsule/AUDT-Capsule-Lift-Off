@@ -190,3 +190,13 @@
     display:none; 
     background-color: teal;
 }
+
+.mission-status {
+
+    width:100%;  
+    text-align: center; 
+    font-size: 10px; 
+    position: absolute; 
+    height: 25px; 
+    padding-right:25px;
+}
