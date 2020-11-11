@@ -34,15 +34,13 @@ contract Staking is Ownable {
     uint256 public totalReleased;                       //track total number of redeemed deposits
     uint256 public totalCancelled;                      //track total number of cancelled deposits
     uint256 public stakedAmount;                        //total number of staked tokens    
-    IERC20 private _auditToken;                         //AUDT token address 
-    GovernanceToken private _governanceToken;
-    uint256 public _governanceTokenRatio;
+    IERC20 private _auditToken;                         //AUDT token 
+    GovernanceToken private _governanceToken;           //Governance token 
+    uint256 public governanceTokenRatio;                //Governance token ratio
     uint256 public stakingDateStart;                    //Staking date start
     uint256 public stakingDateEnd;                      //Staking date end
     uint256 public totalReward;                         //Total reward available
     StakingToken private _stakingToken;                 //staking token address
-
-
 
     
     ///@dev Emitted when when staking token is issued
@@ -95,7 +93,7 @@ contract Staking is Ownable {
         stakingDateEnd = _stakingDateEnd;
         totalReward =  _totalReward;
         _governanceToken = _governanceTokenAddress;
-        _governanceTokenRatio = _govTokenRatio;
+        governanceTokenRatio = _govTokenRatio;
 
     }
 
@@ -146,7 +144,7 @@ contract Staking is Ownable {
 
     /**
      * @dev Function to return earning ratio 
-     * @return number representing earning ratio with precision of 18 decimal values       
+     * @return number representing earning ratio with precision to 18 decimal values       
      */
     function returnEarningRatio() public view returns (uint256) {
 
@@ -156,7 +154,12 @@ contract Staking is Ownable {
             return (totalReward.mul(1e18) / stakedAmount) + 1e18 ;
     }
 
-    function returnEarningsPerAmount(uint256 amount)    public view returns(uint256) {
+     /**
+     * @dev Function to return earning ratio per given amount
+     * @param amount - amount in question   
+     * @return number representing earning ratio for given amount       
+     */
+    function returnEarningsPerAmount(uint256 amount) public view returns(uint256) {
 
         return (amount * returnEarningRatio()).div(1e18);
     }
@@ -176,13 +179,13 @@ contract Staking is Ownable {
 
     /**
      * @dev Function to set the staking token address 
-     * @param _stakingTokenAddress address of staking token
+     * @param stakingTokenAddress address of staking token
      */
-    function updateStakingTokenAddress(StakingToken _stakingTokenAddress) public onlyOwner() {
+    function updateStakingTokenAddress(StakingToken stakingTokenAddress) public onlyOwner() {
 
-        require(address(_stakingTokenAddress) != address(0), "Staking Token address can't be 0");
+        require(address(stakingTokenAddress) != address(0), "Staking Token address can't be 0");
 
-        _stakingToken = _stakingTokenAddress;
+        _stakingToken = stakingTokenAddress;
 
     }
 
@@ -224,6 +227,11 @@ contract Staking is Ownable {
         _stakingToken.mint(msg.sender, amount);
     }
 
+
+    /**
+     * @dev Function to deliver governance tokens called from _deliverRewards function
+     * @param amount number of tokens to be issued
+     */
     function _deliverGovernanceToken(uint256 amount) internal {
 
         _governanceToken.mint(msg.sender, amount);
@@ -267,27 +275,22 @@ contract Staking is Ownable {
     function _deliverRewards(uint256 amount) internal {
 
         uint256 amountRedeemed;
-
         
         amountRedeemed = returnEarningsPerAmount(amount);
         released[msg.sender] = released[msg.sender].add(amountRedeemed);
         totalReleased = totalReleased.add(amountRedeemed);
         _auditToken.safeTransfer(msg.sender, amountRedeemed);
-        _deliverGovernanceToken((_governanceTokenRatio * amount) / 1e18);
-        // _governanceToken.safeTransfer(msg.sender,(_governanceTokenRatio * amount) / 1e18);
+        _deliverGovernanceToken((governanceTokenRatio * amount) / 1e18);
         LogRewardDelivered(msg.sender, amountRedeemed);
     }
 
      /**
-     * @dev Function to return deposit in case user requests before of the staking period. 
+     * @dev Function to return deposit in case user requests before the end of staking period. 
      * @param amount number of tokens to return 
      */
     function _returnDeposit(uint256 amount) internal {
 
-        // require(_stakingToken.balanceOf(msg.sender) >= amount, "Staking:_returnDeposit - you are claiming more than your balance.");  
-
-        // deposits[msg.sender] = deposits[msg.sender].sub(amount);
-        cancelled[msg.sender] = released[msg.sender].add(amount);
+        cancelled[msg.sender] = cancelled[msg.sender].add(amount);
         stakedAmount = stakedAmount.sub(amount);
         totalCancelled = totalCancelled.add(amount);
         _auditToken.transfer(msg.sender, amount);
