@@ -12,6 +12,8 @@ let buildDir, configDir, account, earningRatio, receipts, stakingTokenSymbol, st
 // chainId = "0x539"
 
 async function init() {
+
+    
     try {
     let test = ethereum.isMetaMask;
     }catch (error) {
@@ -81,6 +83,8 @@ async function getAccount(capsuleNumber) {
         return loadPortfolio(selectedCapsule);
     }).then(function (res, err) {
         displayProgress(1);
+    }).then(function () {
+        $('#loading').hide();
     }).catch(function (res) {
         console.log(res);
     })
@@ -644,6 +648,7 @@ $(document).on("click", "#mission-table tr", async function (e) {
 
 ethereum.on('accountsChanged', function (accounts) {
     // Time to reload your interface with accounts[0]!
+    $('#loading').show();
     console.log("accounts:" + accounts);
     if (accounts[0] == undefined) {
         console.log("disconnected no account");
@@ -659,6 +664,7 @@ ethereum.on('accountsChanged', function (accounts) {
 
 ethereum.on('chainChanged', function (chainIdCurrent) {
     // window.location.reload();
+    $('#loading').show();
     if (chainIdCurrent != chainId) {
         showTimeNotification("top", "left", "You switched to unsupported network.");
         $(".enableEthereumButton").css("display", "none");

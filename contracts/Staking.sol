@@ -239,7 +239,7 @@ contract Staking is Ownable {
   
      /**
      * @dev Function to redeem contribution. Based on the staking period function may send rewards or just deposit. 
-     * If user redeems after staking ended reward will be added to deposit. If staking is still in progress, 
+     * If user redeems after staking ended, reward will be added to deposit. If staking is still in progress, 
      * user only receives amount contributed.
      * @param amount number of tokens being redeemed
      */

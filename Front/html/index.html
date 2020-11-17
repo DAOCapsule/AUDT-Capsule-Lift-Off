@@ -23,11 +23,9 @@
 </head>
 
 <body class="login-page">
-
-    
-
-
-
+    <div id="loading">
+        <img id="loading-image"  src="../assets/img/loading.gif" alt="Loading..." />
+      </div>
     <nav class="navbar navbar-primary navbar-transparent navbar-absolute">
         <div class="container">
             <!-- Brand and toggle get grouped for better mobile display -->
@@ -528,20 +526,12 @@
 
 <script type="text/javascript">
 
-    // $("#admin-controls").load("modal_admin.html"); 
-    // $("#member-controls").load("modal_member.html"); 
-
     function autorun() {
         init();
-
     }
     if (document.addEventListener) document.addEventListener("DOMContentLoaded", autorun, false);
     else if (document.attachEvent) document.attachEvent("onreadystatechange", autorun);
     else window.onload = autorun;
-
-
-
 </script>
-
 
 </html>
