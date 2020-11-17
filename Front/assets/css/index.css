@@ -173,6 +173,7 @@
     font-size: 30px;
     font-weight: 500;
     display: flex;
+    min-width: 0px;
 }
 
 .status-display {
@@ -200,3 +201,4 @@
     height: 25px; 
     padding-right:25px;
 }
+
