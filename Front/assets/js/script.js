@@ -4,7 +4,7 @@
 
 
 
-let buildDir, configDir, account, gasPrice, gasAmount, secondsInBlock, earningRatio, receipts, stakingTokenSymbol, stakingTokenName,
+let buildDir, configDir, account, earningRatio, receipts, stakingTokenSymbol, stakingTokenName,
     stakedAmount, totalReward, userHoldingsAUDT, conversionUSD_AUDT = 10, userHoldingsGovToken,
     startBlock, endBlock, tokenAddress, stakingAddress, stakingReceipt, governanceToken, selectedCapsule = 1,
     govTokenRewardRatio, stakingStartTime, stakingEndTime, blockNumber, deploymentTime, deploymentStatus, chainId = "0x4";
@@ -12,12 +12,13 @@ let buildDir, configDir, account, gasPrice, gasAmount, secondsInBlock, earningRa
 // chainId = "0x539"
 
 async function init() {
+    try {
     let test = ethereum.isMetaMask;
+    }catch (error) {
+        showTimeNotification("top", "left", error);
+    }
     // ethereum.autoRefreshOnNetworkChange = false;
 
-    gasPrice = 20000000000;
-    gasAmount = 4000000;
-    secondsInBlock = 14.05;
     buildDir = "../../build/contracts/";
     configDir = "../../config/"
     selectedCapsule = 1;
@@ -37,6 +38,7 @@ async function init() {
         return;
     } else if (ethereum.selectedAddress == undefined) {
         $(".enableEthereumButton").css("display", "block");
+        $(".content").css("display", "none");
         return;
     }
 
@@ -104,12 +106,10 @@ async function loadConfig(fileName) {
 
 }
 
-
-
 async function loadContract(capsuleNumber) {
 
 
-    let res = await loadConfig("airdrop" + capsuleNumber + ".json");
+    let res = await loadConfig("capsule" + capsuleNumber + ".json");
 
     let actual_JSON = JSON.parse(res);
     const { AUDT_TOKEN_ADDRESS, STAKING_CONTRACT_ADDRESS, STAKING_RECEIPT, GOVERNANCE_TOKEN_ADDRESS, GOVERNANCE_TOKEN_REWARD_RATIO,
