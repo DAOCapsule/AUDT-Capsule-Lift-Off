@@ -259,6 +259,8 @@ async function loadPortfolio(selectedCapsule) {
             $("#dcap-to-take").html(formatNumber(govTokenRewardRatio * receipts) + " DCAP");
             $("#taking-amount").val(receipts);
             $("#take").css("display", "block");
+        }else {
+            $("#dcap-to-take").html("0 DCAP");
         }
         // $("#taking-amount").val(y.toString());
         $("#staking-amount").attr("disabled", true);
