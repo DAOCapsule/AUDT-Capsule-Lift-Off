@@ -87,6 +87,9 @@ contract Staking is Ownable {
         require(_govTokenRatio != 0, "Staking:constructor - Governance token ratio can't be 0");
         require(_auditTokenAddress != IERC20(0), "Staking:constructor - Audit token address can't be 0");
         require(_governanceTokenAddress != GovernanceToken(0), "Staking:constructor - Governance token address can't be 0");
+        require(_totalReward < 2**238 -1 , "The reward is too high");  // max uint256 subtracted with 18 digits to accommodate
+                                                                       // for multiplications in later code. 
+        require(_govTokenRatio <= 10**17 , "The ratio is too high");   // largest gov token ratio in 4 capsule
 
         _auditToken = _auditTokenAddress;
         stakingDateStart = _stakingDateStart;
@@ -121,6 +124,8 @@ contract Staking is Ownable {
 
         require(_stakingDateEnd != 0, "Staking:constructor - Staking end date can't be 0" );
         require(_stakingDateStart != 0, "Staking:constructor - Staking start date can't be 0" );
+        require(_stakingDateStart > block.number, "Staking:constructor - Staking date start can't be less than current block");
+        require(_stakingDateEnd > _stakingDateStart, "Staking:constructor - Staking date end can't be less than Staking date start");
         stakingDateStart = _stakingDateStart;
         stakingDateEnd = _stakingDateEnd;
 
@@ -161,7 +166,7 @@ contract Staking is Ownable {
      */
     function returnEarningsPerAmount(uint256 amount) public view returns(uint256) {
 
-        return (amount * returnEarningRatio()).div(1e18);
+        return (amount.mul(returnEarningRatio())).div(1e18);
     }
 
     /**
@@ -199,7 +204,7 @@ contract Staking is Ownable {
         require(amount >= 100e18, "Staking:stake - Minimum contribution amount is 100 AUDT tokens");
         require(stakingDateStart >= block.number, "Staking:stake - deposit period ended. ");      
         require(blacklistedAddress[msg.sender] == false, "This address has been blacklisted");
-        stakedAmount += amount;  // track tokens contributed so far
+        stakedAmount = stakedAmount.add(amount);  // track tokens contributed so far
         _receiveDeposit(amount);
         _deliverStakingTokens( amount);
         emit LogStakingTokensIssued(msg.sender, amount);
@@ -213,7 +218,7 @@ contract Staking is Ownable {
     function _receiveDeposit(uint amount) internal  {      
 
         _auditToken.safeTransferFrom(msg.sender, address(this), amount);
-        deposits[msg.sender] += amount;
+        deposits[msg.sender] = deposits[msg.sender].add(amount);
         emit LogDepositReceived(msg.sender, amount);
     }
 
@@ -280,7 +285,7 @@ contract Staking is Ownable {
         released[msg.sender] = released[msg.sender].add(amountRedeemed);
         totalReleased = totalReleased.add(amountRedeemed);
         _auditToken.safeTransfer(msg.sender, amountRedeemed);
-        _deliverGovernanceToken((governanceTokenRatio * amount) / 1e18);
+        _deliverGovernanceToken((governanceTokenRatio.mul(amount)).div(1e18));
         LogRewardDelivered(msg.sender, amountRedeemed);
     }
 
@@ -293,7 +298,7 @@ contract Staking is Ownable {
         cancelled[msg.sender] = cancelled[msg.sender].add(amount);
         stakedAmount = stakedAmount.sub(amount);
         totalCancelled = totalCancelled.add(amount);
-        _auditToken.transfer(msg.sender, amount);
+        _auditToken.safeTransfer(msg.sender, amount);
         LogDepositCancelled(msg.sender, amount);
     }
 }

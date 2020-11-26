@@ -71,6 +71,33 @@ contract("Staking Token", (accounts) => {
         })
     })
 
+    describe("Deploy" , async () => {
+
+        it("Initiate reward as number greater than unit256 / (10^18)", async () => {
+
+            let blockNumber = await web3.eth.getBlockNumber();
+            let oversizedReward = new BigNumber(2).power(239);
+
+            try {
+                staking = await STAKING.new(token.address, governanceToken.address, blockNumber + 100, blockNumber + 200, oversizedReward, governanceTokenRewardRatio);
+            } catch (error) {
+                ensureException(error);
+            }
+        })
+
+        it("Initiate reward as number greater than (10^17) - largest of all the capsules", async () => {
+
+            let blockNumber = await web3.eth.getBlockNumber();
+            let oversizedDCAPRatio = new BigNumber(10).power(10);
+
+            try {
+                staking = await STAKING.new(token.address, governanceToken.address, blockNumber + 100, blockNumber + 200, totalReward, oversizedDCAPRatio);
+            } catch (error) {
+                ensureException(error);
+            }
+        })
+
+    })
 
 
 
@@ -369,11 +396,13 @@ contract("Staking Token", (accounts) => {
 
         it("It should update staking period by the owner", async () => {
 
-            await staking.updateStakingPeriods(1, 2, {from:owner});
+            let blockNumber = await web3.eth.getBlockNumber();
+
+            await staking.updateStakingPeriods(blockNumber + 2, blockNumber + 3, {from:owner});
             let startDate = await staking.stakingDateStart();
             let endDate = await staking.stakingDateEnd();
-            assert.strictEqual(startDate.toNumber(), 1);
-            assert.strictEqual(endDate.toNumber(), 2);
+            assert.strictEqual(startDate.toNumber(), blockNumber + 2);
+            assert.strictEqual(endDate.toNumber(), blockNumber + 3);
         })
 
         it("It should fail updating staking period by holder1", async () => {
@@ -389,6 +418,28 @@ contract("Staking Token", (accounts) => {
 
             try {
                 await staking.updateStakingPeriods(0, 2, {from:owner});
+            } catch (error) {
+                ensureException(error);
+            }          
+        })
+
+        it("It should fail updating staking period by passing start date less or equal current block number", async () => {
+
+            let blockNumber = await web3.eth.getBlockNumber();
+
+            try {
+                await staking.updateStakingPeriods(blockNumber,  blockNumber + 5, {from:owner});
+            } catch (error) {
+                ensureException(error);
+            }          
+        })
+
+        it("It should fail updating staking period by passing start date larger than end date", async () => {
+
+            let blockNumber = await web3.eth.getBlockNumber();
+
+            try {
+                await staking.updateStakingPeriods(blockNumber + 10,  blockNumber + 5, {from:owner});
             } catch (error) {
                 ensureException(error);
             }          

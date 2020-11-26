@@ -1,4 +1,4 @@
-const cnf = require('../config/airdrop1.json');
+const cnf = require('../config/capsule1.json');
 
 const Token = artifacts.require('./Token.sol');
 const Staking = artifacts.require('./Staking.sol');
