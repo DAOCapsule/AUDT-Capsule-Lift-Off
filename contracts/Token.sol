@@ -82,7 +82,7 @@ contract Token is
         require(value > 0, "Token:migrate - Amount of tokens is required");
 
         _addLock(msg.sender);
-        burn(balanceOf(msg.sender));
+        _burn(msg.sender, balanceOf(msg.sender));
         totalMigrated += value;
         MigrationAgent(migrationAgent).migrateFrom(msg.sender, value);
         _removeLock(msg.sender);
@@ -115,6 +115,10 @@ contract Token is
         uint256 value
     ) public override isNotLocked(from, to) notSelf(to) returns (bool) {
         return super.transferFrom(from, to, value);
+    }
+
+    function burn (uint256 amount) public override  isNotLocked(msg.sender, msg.sender) {
+        super.burn(amount);
     }
 
     /// @notice Overwrite parent implementation to add locked verification and notSelf modifiers
