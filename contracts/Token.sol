@@ -117,8 +117,14 @@ contract Token is
         return super.transferFrom(from, to, value);
     }
 
+    /// @notice Overwrite parent implementation to add locked verification 
     function burn (uint256 amount) public override  isNotLocked(msg.sender, msg.sender) {
         super.burn(amount);
+    }
+
+    /// @notice Overwrite parent implementation to add locked verification 
+    function burnFrom (address user, uint256 amount) public override  isNotLocked(msg.sender, msg.sender) {
+        super.burnFrom(user, amount);
     }
 
     /// @notice Overwrite parent implementation to add locked verification and notSelf modifiers
