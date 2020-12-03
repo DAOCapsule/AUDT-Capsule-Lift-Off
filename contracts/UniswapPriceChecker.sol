@@ -36,14 +36,6 @@ contract UniswapPriceChecker {
       stakingToken4 = token;
   }
 
-  // function convertEthToDai(uint daiAmount) public payable {
-  //   uint deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
-  //   uniswapRouter.swapETHForExactTokens{ value: msg.value }(daiAmount, getPathForETHtoDAI(), address(this), deadline);
-    
-  //   // refund leftover ETH to user
-  //   (bool success,) = msg.sender.call{ value: address(this).balance }("");
-  //   require(success, "refund failed");
-  // }
   
   function getEstimatedTokenForDAI(uint tokenAmount, tokensList position) public view returns (uint[] memory) {
     return uniswapRouter.getAmountsIn(tokenAmount, getPathForTokenToDAI(position));
