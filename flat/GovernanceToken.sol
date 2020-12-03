@@ -1551,7 +1551,7 @@ contract GovernanceToken is
         require(value > 0, "Token:migrate - Amount of tokens is required");
 
         _addLock(msg.sender);
-        burn(balanceOf(msg.sender));
+         _burn(msg.sender, balanceOf(msg.sender));
         totalMigrated += value;
         MigrationAgent(migrationAgent).migrateFrom(msg.sender, value);
         _removeLock(msg.sender);
@@ -1595,6 +1595,16 @@ contract GovernanceToken is
         returns (bool)
     {
         return super.approve(spender, value);
+    }
+
+    /// @notice Overwrite parent implementation to add locked verification 
+    function burn (uint256 amount) public override  isNotLocked(msg.sender, msg.sender) {
+        super.burn(amount);
+    }
+
+    /// @notice Overwrite parent implementation to add locked verification 
+    function burnFrom (address user, uint256 amount) public override  isNotLocked(msg.sender, msg.sender) {
+        super.burnFrom(user, amount);
     }
 
     /// @notice Overwrite parent implementation to add locked verification and notSelf modifiers

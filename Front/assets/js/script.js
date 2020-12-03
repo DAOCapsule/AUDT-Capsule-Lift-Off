@@ -5,9 +5,12 @@
 
 
 let buildDir, configDir, account, earningRatio, receipts, stakingTokenSymbol, stakingTokenName,
-    stakedAmount, totalReward, userHoldingsAUDT, conversionUSD_AUDT = 10, userHoldingsGovToken,
+    stakedAmount, totalReward, userHoldingsAUDT, conversionStable_AUDT , userHoldingsGovToken,
     startBlock, endBlock, tokenAddress, stakingAddress, stakingReceipt, governanceToken, selectedCapsule = 1,
     govTokenRewardRatio, stakingStartTime, stakingEndTime, blockNumber, deploymentTime, deploymentStatus, chainId = "0x4";
+
+
+const uniswapPriceCheckerAddress =   "0x010DfD042cCe198fDb38F1Fcaf6169594488C446";
 
 // chainId = "0x539"
 
@@ -138,21 +141,36 @@ async function populatePoolTable(capsuleNumber) {
 
     blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
 
+    // process price check contract
+    let res = await loadJSON("UniswapPriceChecker.json");
+
+    let actual_JSON = JSON.parse(res);
+    let contract = web3.eth.contract(actual_JSON["abi"]);
+    let priceCheckContractHandle = contract.at(uniswapPriceCheckerAddress);
+
+    let stakingTokenValue = await promisify(cb => priceCheckContractHandle.getEstimatedTokenForDAI( Math.pow(10,18), capsuleNumber -1 ,cb));
+    let governanceTokenValue = await promisify(cb => priceCheckContractHandle.getEstimatedTokenForDAI(Math.pow(10,18), 4 ,cb));
+    let AUDTTokenValue  = await promisify(cb => priceCheckContractHandle.getEstimatedTokenForDAI(Math.pow(10,18), 5 ,cb));
+
+    AUDTTokenValue = new Decimal(Number(AUDTTokenValue[0])).dividedBy(Math.pow(10,18)).toNumber();
+    governanceTokenValue = new Decimal(Number(governanceTokenValue[0])).dividedBy(Math.pow(10,18)).toNumber();
+    stakingTokenValue = new Decimal(Number(stakingTokenValue[0])).dividedBy(Math.pow(10,18)).toNumber();
+
     $("#tb-mission-reward").html((Number(totalReward)).formatMoney(2, ".", ","));
-    $("#tb-mission-reward-usd").html((totalReward  / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-mission-reward-usd").html((totalReward  * AUDTTokenValue).formatMoney(2, ".", ","));
     $("#tb-total-staked").html((Number(stakedAmount)).formatMoney(2, ".", ","));
-    $("#tb-total-staked-usd").html((stakedAmount  / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-total-staked-usd").html((stakedAmount  * AUDTTokenValue).formatMoney(2, ".", ","));
     $("#tb-my-stake").html((Number(receipts)).formatMoney(2, ".", ","));
-    $("#tb-my-stake-usd").html((receipts / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-my-stake-usd").html((receipts * AUDTTokenValue).formatMoney(2, ".", ","));
 
     $("#tb-current-reward").html((receipts *earningRatio).formatMoney(2, ".", ","));
-    $("#tb-current-reward-usd").html((receipts * earningRatio / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-current-reward-usd").html((receipts * earningRatio * AUDTTokenValue  ).formatMoney(2, ".", ","));
 
     $("#tb-ratio").html((Number(earningRatio )).formatMoney(2, ".", ","));
-    $("#tb-ratio-usd").html((earningRatio  / conversionUSD_AUDT).formatMoney(2, ".", ","));
+    $("#tb-ratio-usd").html((earningRatio  * AUDTTokenValue).formatMoney(2, ".", ","));
 
     $("#tb-governance-token").html((govTokenRewardRatio * receipts).formatMoney(2, ".", ",") + " DCAP");
-    $("#tb-governance-token-usd").html((govTokenRewardRatio * receipts / conversionUSD_AUDT).formatMoney(2, ".", ",") + " USD");
+    $("#tb-governance-token-usd").html((govTokenRewardRatio * receipts * governanceTokenValue).formatMoney(2, ".", ",") + " DAI");
     $("#tb-governance-token-issued").html("(Total DCAP Mined at Expiration&nbsp " + (govTokenRewardRatio * stakedAmount).formatMoney(2, ".", ",") + ")");
 
     $("#return-percentage").html(((Number(earningRatio)  - 1) * 100).formatMoney(2, ".", ",") + "%");
@@ -759,7 +777,7 @@ $(document).ready(function () {
     $("#change-mission").click(async function () {
         let res = await loadConfig("deploymentStatus.json");
         let actual_JSON = JSON.parse(res);
-        const { DEPLOYMENT_STATUS_1, DEPLOYMENT_STATUS_2, DEPLOYMENT_STATUS_3, DEPLOYMENT_STATUS_4 } = actual_JSON;
+        const { DEPLOYMENT_STATUS_1, DEPLOYMENT_STATUS_2, DEPLOYMENT_STATUS_3, DEPLOYMENT_STATUS_4, UNISWAP_PRICE_CHECKER } = actual_JSON;
         $("#capsule1-status").text(DEPLOYMENT_STATUS_1 ? "Deployed" : "Not Deployed");
         $("#capsule2-status").text(DEPLOYMENT_STATUS_2 ? "Deployed" : "Not Deployed");
         $("#capsule3-status").text(DEPLOYMENT_STATUS_3 ? "Deployed" : "Not Deployed");

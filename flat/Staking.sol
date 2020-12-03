@@ -1608,7 +1608,7 @@ contract GovernanceToken is
         require(value > 0, "Token:migrate - Amount of tokens is required");
 
         _addLock(msg.sender);
-        burn(balanceOf(msg.sender));
+         _burn(msg.sender, balanceOf(msg.sender));
         totalMigrated += value;
         MigrationAgent(migrationAgent).migrateFrom(msg.sender, value);
         _removeLock(msg.sender);
@@ -1652,6 +1652,16 @@ contract GovernanceToken is
         returns (bool)
     {
         return super.approve(spender, value);
+    }
+
+    /// @notice Overwrite parent implementation to add locked verification 
+    function burn (uint256 amount) public override  isNotLocked(msg.sender, msg.sender) {
+        super.burn(amount);
+    }
+
+    /// @notice Overwrite parent implementation to add locked verification 
+    function burnFrom (address user, uint256 amount) public override  isNotLocked(msg.sender, msg.sender) {
+        super.burnFrom(user, amount);
     }
 
     /// @notice Overwrite parent implementation to add locked verification and notSelf modifiers
@@ -1797,15 +1807,13 @@ contract Staking is Ownable {
     uint256 public totalReleased;                       //track total number of redeemed deposits
     uint256 public totalCancelled;                      //track total number of cancelled deposits
     uint256 public stakedAmount;                        //total number of staked tokens    
-    IERC20 private _auditToken;                         //AUDT token address 
-    GovernanceToken private _governanceToken;
-    uint256 public _governanceTokenRatio;
+    IERC20 private _auditToken;                         //AUDT token 
+    GovernanceToken private _governanceToken;           //Governance token 
+    uint256 public governanceTokenRatio;                //Governance token ratio
     uint256 public stakingDateStart;                    //Staking date start
     uint256 public stakingDateEnd;                      //Staking date end
     uint256 public totalReward;                         //Total reward available
     StakingToken private _stakingToken;                 //staking token address
-
-
 
     
     ///@dev Emitted when when staking token is issued
@@ -1852,13 +1860,16 @@ contract Staking is Ownable {
         require(_govTokenRatio != 0, "Staking:constructor - Governance token ratio can't be 0");
         require(_auditTokenAddress != IERC20(0), "Staking:constructor - Audit token address can't be 0");
         require(_governanceTokenAddress != GovernanceToken(0), "Staking:constructor - Governance token address can't be 0");
+        require(_totalReward < 2**238 -1 , "The reward is too high");  // max uint256 subtracted with 18 digits to accommodate
+                                                                       // for multiplications in later code. 
+        require(_govTokenRatio <= 10**17 , "The ratio is too high");   // largest gov token ratio in 4 capsule
 
         _auditToken = _auditTokenAddress;
         stakingDateStart = _stakingDateStart;
         stakingDateEnd = _stakingDateEnd;
         totalReward =  _totalReward;
         _governanceToken = _governanceTokenAddress;
-        _governanceTokenRatio = _govTokenRatio;
+        governanceTokenRatio = _govTokenRatio;
 
     }
 
@@ -1886,6 +1897,8 @@ contract Staking is Ownable {
 
         require(_stakingDateEnd != 0, "Staking:constructor - Staking end date can't be 0" );
         require(_stakingDateStart != 0, "Staking:constructor - Staking start date can't be 0" );
+        require(_stakingDateStart > block.number, "Staking:constructor - Staking date start can't be less than current block");
+        require(_stakingDateEnd > _stakingDateStart, "Staking:constructor - Staking date end can't be less than Staking date start");
         stakingDateStart = _stakingDateStart;
         stakingDateEnd = _stakingDateEnd;
 
@@ -1909,7 +1922,7 @@ contract Staking is Ownable {
 
     /**
      * @dev Function to return earning ratio 
-     * @return number representing earning ratio with precision of 18 decimal values       
+     * @return number representing earning ratio with precision to 18 decimal values       
      */
     function returnEarningRatio() public view returns (uint256) {
 
@@ -1919,9 +1932,14 @@ contract Staking is Ownable {
             return (totalReward.mul(1e18) / stakedAmount) + 1e18 ;
     }
 
-    function returnEarningsPerAmount(uint256 amount)    public view returns(uint256) {
+     /**
+     * @dev Function to return earning ratio per given amount
+     * @param amount - amount in question   
+     * @return number representing earning ratio for given amount       
+     */
+    function returnEarningsPerAmount(uint256 amount) public view returns(uint256) {
 
-        return (amount * returnEarningRatio()).div(1e18);
+        return (amount.mul(returnEarningRatio())).div(1e18);
     }
 
     /**
@@ -1939,13 +1957,13 @@ contract Staking is Ownable {
 
     /**
      * @dev Function to set the staking token address 
-     * @param _stakingTokenAddress address of staking token
+     * @param stakingTokenAddress address of staking token
      */
-    function updateStakingTokenAddress(StakingToken _stakingTokenAddress) public onlyOwner() {
+    function updateStakingTokenAddress(StakingToken stakingTokenAddress) public onlyOwner() {
 
-        require(address(_stakingTokenAddress) != address(0), "Staking Token address can't be 0");
+        require(address(stakingTokenAddress) != address(0), "Staking Token address can't be 0");
 
-        _stakingToken = _stakingTokenAddress;
+        _stakingToken = stakingTokenAddress;
 
     }
 
@@ -1959,7 +1977,7 @@ contract Staking is Ownable {
         require(amount >= 100e18, "Staking:stake - Minimum contribution amount is 100 AUDT tokens");
         require(stakingDateStart >= block.number, "Staking:stake - deposit period ended. ");      
         require(blacklistedAddress[msg.sender] == false, "This address has been blacklisted");
-        stakedAmount += amount;  // track tokens contributed so far
+        stakedAmount = stakedAmount.add(amount);  // track tokens contributed so far
         _receiveDeposit(amount);
         _deliverStakingTokens( amount);
         emit LogStakingTokensIssued(msg.sender, amount);
@@ -1973,7 +1991,7 @@ contract Staking is Ownable {
     function _receiveDeposit(uint amount) internal  {      
 
         _auditToken.safeTransferFrom(msg.sender, address(this), amount);
-        deposits[msg.sender] += amount;
+        deposits[msg.sender] = deposits[msg.sender].add(amount);
         emit LogDepositReceived(msg.sender, amount);
     }
 
@@ -1987,6 +2005,11 @@ contract Staking is Ownable {
         _stakingToken.mint(msg.sender, amount);
     }
 
+
+    /**
+     * @dev Function to deliver governance tokens called from _deliverRewards function
+     * @param amount number of tokens to be issued
+     */
     function _deliverGovernanceToken(uint256 amount) internal {
 
         _governanceToken.mint(msg.sender, amount);
@@ -1994,7 +2017,7 @@ contract Staking is Ownable {
   
      /**
      * @dev Function to redeem contribution. Based on the staking period function may send rewards or just deposit. 
-     * If user redeems after staking ended reward will be added to deposit. If staking is still in progress, 
+     * If user redeems after staking ended, reward will be added to deposit. If staking is still in progress, 
      * user only receives amount contributed.
      * @param amount number of tokens being redeemed
      */
@@ -2030,30 +2053,25 @@ contract Staking is Ownable {
     function _deliverRewards(uint256 amount) internal {
 
         uint256 amountRedeemed;
-
         
         amountRedeemed = returnEarningsPerAmount(amount);
         released[msg.sender] = released[msg.sender].add(amountRedeemed);
         totalReleased = totalReleased.add(amountRedeemed);
         _auditToken.safeTransfer(msg.sender, amountRedeemed);
-        _deliverGovernanceToken((_governanceTokenRatio * amount) / 1e18);
-        // _governanceToken.safeTransfer(msg.sender,(_governanceTokenRatio * amount) / 1e18);
+        _deliverGovernanceToken((governanceTokenRatio.mul(amount)).div(1e18));
         LogRewardDelivered(msg.sender, amountRedeemed);
     }
 
      /**
-     * @dev Function to return deposit in case user requests before of the staking period. 
+     * @dev Function to return deposit in case user requests before the end of staking period. 
      * @param amount number of tokens to return 
      */
     function _returnDeposit(uint256 amount) internal {
 
-        // require(_stakingToken.balanceOf(msg.sender) >= amount, "Staking:_returnDeposit - you are claiming more than your balance.");  
-
-        // deposits[msg.sender] = deposits[msg.sender].sub(amount);
-        cancelled[msg.sender] = released[msg.sender].add(amount);
+        cancelled[msg.sender] = cancelled[msg.sender].add(amount);
         stakedAmount = stakedAmount.sub(amount);
         totalCancelled = totalCancelled.add(amount);
-        _auditToken.transfer(msg.sender, amount);
+        _auditToken.safeTransfer(msg.sender, amount);
         LogDepositCancelled(msg.sender, amount);
     }
 }
