@@ -1,0 +1,35 @@
+// const Migrations = artifacts.require("Migrations");
+// const UniswapV2Factory = artifacts.require("UniswapV2Factory");
+const Token1 = artifacts.require("Token");
+const Token2 = artifacts.require("DAI");
+const util = require('util');
+
+
+module.exports = async function (deployer) {
+    //   deployer.deploy(Migrations);Combined-Json.json
+//     deployer.deploy(UniswapV2Factory, "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D").then(() => {
+//         return UniswapV2Factory.deployed().then((UniswapV2FactoryInstance) => {
+//             console.log('[ UniswapV2Factory address ]: ' + UniswapV2FactoryInstance.address);
+//         })
+//         }).then(deployer.deploy(Token1)).then(() => {
+//             return Token1.deployed().then((Token1Instance) => {
+//             console.log('[ Token1  ]: ' + Token1Instance.address);
+//             })
+//         }).then(deployer.deploy(Token2).then(() => {
+//             return Token2.deployed().then((Token2Instance) => {
+//                 console.log('[ Token1  ]: ' + Token2Instance.address);
+
+//         })
+//     })
+            
+// }
+
+//    let a = await deployer.deploy(UniswapV2Factory, "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D");
+
+//    console.log(JSON.stringify("UniswapV2Factory: " + UniswapV2Factory));
+    let b = await deployer.deploy(Token1);
+    let c = await deployer.deploy(Token2);
+//    let pair = await a.createPair(b, c);
+    // console.log(pair);
+
+}

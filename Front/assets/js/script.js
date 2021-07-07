@@ -7,16 +7,24 @@
 let buildDir, configDir, account, earningRatio, receipts, stakingTokenSymbol, stakingTokenName,
     stakedAmount, totalReward, userHoldingsAUDT, conversionStable_AUDT , userHoldingsGovToken,
     startBlock, endBlock, tokenAddress, stakingAddress, stakingReceipt, governanceToken, selectedCapsule = 1,
-    govTokenRewardRatio, stakingStartTime, stakingEndTime, blockNumber, deploymentTime, deploymentStatus, chainId = "0x4";
+    govTokenRewardRatio, stakingStartTime, stakingEndTime, blockNumber, deploymentTime, deploymentStatus, chainId = "0x539", web3;
+
+    // chainId = "0x4";
 
 
 const uniswapPriceCheckerAddress =   "0x010DfD042cCe198fDb38F1Fcaf6169594488C446";
 
-// chainId = "0x539"
+
 
 async function init() {
 
-    
+    ethEnabled();
+
+
+
+    await getAccount();
+
+
     try {
     let test = ethereum.isMetaMask;
     }catch (error) {
@@ -65,6 +73,16 @@ async function init() {
         $(".content").css("display", "none");
     }
 }
+
+const ethEnabled = async () => {
+    if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        window.ethereum.enable();
+
+        return true;
+    }
+    return false;
+};
 
 function handleAccountsChanged(accounts) {
     if (accounts.length === 0) {
@@ -130,27 +148,27 @@ async function loadContract(capsuleNumber) {
     stakingStartTime = STAKING_START_TIME;
     deploymentTime = DEPLOYMENT_TIME;
     deploymentStatus = DEPLOYMENT_STATUS;
-    let govTokenRewardRatioBig = GOVERNANCE_TOKEN_REWARD_RATIO;
-
-    govTokenRewardRatio = new Decimal(Number(govTokenRewardRatioBig)).dividedBy(Math.pow(10,18));
 
 }
 
 
 async function populatePoolTable(capsuleNumber) {
 
-    blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
+    blockNumber = await web3.eth.getBlockNumber();
 
     // process price check contract
     let res = await loadJSON("UniswapPriceChecker.json");
 
     let actual_JSON = JSON.parse(res);
-    let contract = web3.eth.contract(actual_JSON["abi"]);
-    let priceCheckContractHandle = contract.at(uniswapPriceCheckerAddress);
+    // let contract = web3.eth.contract(actual_JSON["abi"]);
+    // let priceCheckContractHandle = contract.at(uniswapPriceCheckerAddress);
 
-    let stakingTokenValue = await promisify(cb => priceCheckContractHandle.getEstimatedTokenForDAI( Math.pow(10,18), capsuleNumber -1 ,cb));
-    let governanceTokenValue = await promisify(cb => priceCheckContractHandle.getEstimatedTokenForDAI(Math.pow(10,18), 4 ,cb));
-    let AUDTTokenValue  = await promisify(cb => priceCheckContractHandle.getEstimatedTokenForDAI(Math.pow(10,18), 5 ,cb));
+    let priceCheckContractHandle = new web3.eth.Contract(actual_JSON["abi"], uniswapPriceCheckerAddress);
+
+
+    let stakingTokenValue = await priceCheckContractHandle.methods.getEstimatedTokenForDAI(Math.pow(10, 18), capsuleNumber - 1).call();
+    let governanceTokenValue = await priceCheckContractHandle.methods.getEstimatedTokenForDAI(Math.pow(10, 18), 4).call();
+    let AUDTTokenValue = await priceCheckContractHandle.methods.getEstimatedTokenForDAI(Math.pow(10, 18), 5).call();
 
     AUDTTokenValue = new Decimal(Number(AUDTTokenValue[0])).dividedBy(Math.pow(10,18)).toNumber();
     governanceTokenValue = new Decimal(Number(governanceTokenValue[0])).dividedBy(Math.pow(10,18)).toNumber();
@@ -167,8 +185,7 @@ async function populatePoolTable(capsuleNumber) {
     $("#tb-current-reward-usd").html((receipts * earningRatio * AUDTTokenValue  ).formatMoney(2, ".", ","));
 
     $("#tb-ratio").html((Number(earningRatio )).formatMoney(2, ".", ","));
-    $("#tb-ratio-usd").html((earningRatio  * AUDTTokenValue).formatMoney(2, ".", ","));
-
+    $("#tb-ratio-usd").html((earningRatio * AUDTTokenValue).formatMoney(2, ".", ","));
     $("#tb-governance-token").html((govTokenRewardRatio * receipts).formatMoney(2, ".", ",") + " DCAP");
     $("#tb-governance-token-usd").html((govTokenRewardRatio * receipts * governanceTokenValue).formatMoney(2, ".", ",") + " DAI");
     $("#tb-governance-token-issued").html("(Total DCAP Mined at Expiration&nbsp " + (govTokenRewardRatio * stakedAmount).formatMoney(2, ".", ",") + ")");
@@ -179,6 +196,7 @@ async function populatePoolTable(capsuleNumber) {
     $("#end-block").html("<b>End Block:</b>" + endBlock);
 
     $("#dAudt-version").html("1 " + stakingTokenName +"=");
+    $("#audt-dai").html(AUDTTokenValue.formatMoney(2, ".", ","));
 
 }
 
@@ -192,10 +210,13 @@ async function loadPortfolio(selectedCapsule) {
     let res = await loadJSON("Staking.json");
 
     let actual_JSON = JSON.parse(res);
-    let contract = web3.eth.contract(actual_JSON["abi"]);
-    let stakingContractHandle = contract.at(stakingAddress);
+    // let contract = web3.eth.Contract(actual_JSON["abi"]);
+    // let stakingContractHandle = contract.at(stakingAddress);
 
-    let earningRatioBig = await promisify(cb => stakingContractHandle.returnEarningRatio(cb));
+    let stakingContractHandle = new web3.eth.Contract(actual_JSON["abi"], stakingAddress);
+
+
+    let earningRatioBig = await stakingContractHandle.methods.returnEarningRatio().call();
 
     earningRatio = new Decimal(Number(earningRatioBig)).dividedBy(Math.pow(10,18)); 
 
@@ -203,17 +224,19 @@ async function loadPortfolio(selectedCapsule) {
     res = await loadJSON("StakingToken.json");
 
     actual_JSON = JSON.parse(res);
-    contract = web3.eth.contract(actual_JSON["abi"]);
-    let stakingTokenContractHandle = contract.at(stakingReceipt);
+    // contract = web3.eth.contract(actual_JSON["abi"]);
+    // let stakingTokenContractHandle = contract.at(stakingReceipt);
 
-    let receiptsBig = await promisify(cb => stakingTokenContractHandle.balanceOf(account, cb));
-    stakingTokenSymbol = await promisify(cb => stakingTokenContractHandle.symbol(cb));
-    stakingTokenName = await promisify(cb => stakingTokenContractHandle.name(cb));
-    let earningsPerAmountBig = await promisify(cb => stakingContractHandle.returnEarningsPerAmount(receiptsBig, cb));
-    let stakedAmountBig = await promisify(cb => stakingContractHandle.stakedAmount(cb));
-    let totalRewardBig = await promisify(cb => stakingContractHandle.totalReward(cb));
-    startBlock = await promisify(cb => stakingContractHandle.stakingDateStart(cb));
-    endBlock = await promisify(cb => stakingContractHandle.stakingDateEnd(cb));
+    let stakingTokenContractHandle = new web3.eth.Contract(actual_JSON["abi"], stakingReceipt);
+
+    let receiptsBig = await stakingTokenContractHandle.methods.balanceOf(account).call();
+    stakingTokenSymbol = await stakingTokenContractHandle.methods.symbol().call();
+    stakingTokenName = await stakingTokenContractHandle.methods.name().call();
+    let earningsPerAmountBig = await stakingContractHandle.methods.returnEarningsPerAmount(receiptsBig).call();
+    let stakedAmountBig = await stakingContractHandle.methods.stakedAmount().call();
+    let totalRewardBig = await stakingContractHandle.methods.totalReward().call();
+    startBlock = await stakingContractHandle.methods.stakingDateStart().call();
+    endBlock = await stakingContractHandle.methods.stakingDateEnd().call();
 
     totalReward = new Decimal(Number(totalRewardBig)).dividedBy(Math.pow(10,18)).toNumber(); 
     stakedAmount = new Decimal(Number(stakedAmountBig)).dividedBy(Math.pow(10,18)).toNumber(); 
@@ -225,24 +248,29 @@ async function loadPortfolio(selectedCapsule) {
 
     // process AUDT token
 
-    res = await loadJSON("Token.json");
+    res = await loadJSON("AuditToken.json");
     actual_JSON = JSON.parse(res);
-    contract = web3.eth.contract(actual_JSON["abi"]);
-    let AUDTContractHandle = contract.at(tokenAddress);
+    // contract = web3.eth.contract(actual_JSON["abi"]);
+    // let AUDTContractHandle = contract.at(tokenAddress);
 
-    let userHoldingsAUDTBig = await promisify(cb => AUDTContractHandle.balanceOf(account, cb));
+    let AUDTContractHandle = new web3.eth.Contract(actual_JSON["abi"], tokenAddress);
+
+
+    let userHoldingsAUDTBig = await AUDTContractHandle.methods.balanceOf(account).call();
 
     userHoldingsAUDT = new Decimal(Number(userHoldingsAUDTBig)).dividedBy(Math.pow(10,18)); 
 
 
     // process Governance Token
 
-    res = await loadJSON("GovernanceToken.json");
-    actual_JSON = JSON.parse(res);
-    contract = web3.eth.contract(actual_JSON["abi"]);
-    let GovernanceContractHandle = contract.at(governanceToken);
+    // res = await loadJSON("GovernanceToken.json");
+    // actual_JSON = JSON.parse(res);
+    // contract = web3.eth.contract(actual_JSON["abi"]);
+    // let GovernanceContractHandle = contract.at(governanceToken);
+    // let GovernanceContractHandle = new web3.eth.Contract(actual_JSON["abi"], governanceToken);
 
-    userHoldingsGovToken = await promisify(cb => GovernanceContractHandle.balanceOf(account, cb));
+
+    // userHoldingsGovToken = await promisify(cb => GovernanceContractHandle.balanceOf(account, cb));
 
     $("#current-value").html(formatNumber(receipts) + " AUDT");
     $("#portfolio-value").html(formatNumber(earningsPerAmount) + " AUDT");
@@ -300,7 +328,7 @@ async function loadPortfolio(selectedCapsule) {
 async function updateCampaignProgress() {
 
     let stakingPercentage;
-    let blockNumber = await promisify(cb => web3.eth.getBlockNumber(cb));
+    let blockNumber = await web3.eth.getBlockNumber();
     let depositPercentage = (blockNumber - deploymentTime) / (stakingStartTime - deploymentTime) * 100;
 
     if (depositPercentage >= 100) {
@@ -421,7 +449,7 @@ function preauthorizeAUDT(amount) {
         let actual_JSON = JSON.parse(res);
         let contract = web3.eth.contract(actual_JSON["abi"]);
         let contractHandle = contract.at(tokenAddress);
-        valueToStake = new Decimal(Number($("#staking-amount").val())).mul( Math.pow(10, 18)).toNumber();
+        valueToStake = new Decimal(Number($("#staking-amount").val())).mul(Math.pow(10, 18));
 
         let id = progressAction("Pre authorizing AUDT tokens", 1, "", false, true);
 

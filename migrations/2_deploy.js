@@ -1,15 +1,16 @@
 const cnf = require('../config/capsule1.json');
 
-const Token = artifacts.require('./Token.sol');
+const Token = artifacts.require('./AuditToken.sol');
 const Staking = artifacts.require('./Staking.sol');
 const StakingToken = artifacts.require('./StakingToken.sol');
-const GovernanceToken = artifacts.require('../GovernanceToken.sol');
 
 var BigNumber = require('big-number');
 
 
 
 module.exports = async function (deployer, network, accounts) { // eslint-disable-line
+
+    const owner = accounts[0];
 
     let blockNumber = await web3.eth.getBlockNumber();
 
@@ -25,39 +26,57 @@ module.exports = async function (deployer, network, accounts) { // eslint-disabl
    
     console.log("total reward:" + totalReward);
 
-    deployer.deploy(Token).then(() => {
-        return Token.deployed().then((tokenInstance) => {
-            console.log('[ Token.address ]: ' + tokenInstance.address);
-            deployer.deploy(GovernanceToken).then(() => {
-                return GovernanceToken.deployed().then((governanceTokenInstance) => {
-                    console.log('[ Governance Token.address ]: ' + governanceTokenInstance.address);
-                    // return deployer.deploy(Staking, tokenInstance.address, governanceTokenInstance.address, STAKING_START_TIME, STAKING_END_TIME, totalReward, governanceTokenRewardRatio).then(() => {
+    await deployer.deploy(Token, owner);
+    let token = await Token.deployed();
 
-                    return deployer.deploy(Staking, tokenInstance.address, governanceTokenInstance.address, blockNumber + 40, blockNumber + 60, totalReward, governanceTokenRewardRatio).then(() => {
-                    
-                        return Staking.deployed().then((stakingInstance) => {
-                            console.log('[ StakingInstance.address ]: ' + stakingInstance.address);
-                            return deployer.deploy(StakingToken, stakingInstance.address, STAKING_TOKEN_SYMBOL, STAKING_TOKEN_NAME).then(() => {
+    await deployer.deploy(Staking, token.address, blockNumber + 40, blockNumber + 60, totalReward);
+    let staking = await Staking.deployed();
 
-                                return StakingToken.deployed().then((stakingTokenInstance) => {
-                                    console.log('[ StakingTokenInstance.address ]: ' + stakingTokenInstance.address);
-                                    console.log('Setting up staking token address in Staking contract....');
-                                    return stakingInstance.updateStakingTokenAddress(stakingTokenInstance.address).then(() => {
-                                        console.log('Setting controller in Governance Token contract....');
+    await deployer.deploy(StakingToken, staking.address, STAKING_TOKEN_SYMBOL, STAKING_TOKEN_NAME);
+    let stakingToken = await StakingToken.deployed();
 
-                                        return governanceTokenInstance.setController(stakingInstance.address).then(() => {
-                                            console.log('Setting controller in AUDT Token contract....');
-                                            return tokenInstance.setController(stakingInstance.address).then(() => {
-                                                console.log("Contracts have been initialized....");
-                                            })
-                                        })
-                                    })
-                                })
-                            })
-                        })
-                    })
-                })
-            })
-        })
-    })
+    await staking.updateStakingTokenAddress(stakingToken.address);
+
+
+    let MINTER_ROLE = web3.utils.keccak256("MINTER_ROLE");
+
+
+    await token.grantRole(MINTER_ROLE, staking.address, { from: owner });
+
+
+    // deployer.deploy(Token).then(() => {
+    //     return Token.deployed().then((tokenInstance) => {
+    //         console.log('[ Token.address ]: ' + tokenInstance.address);
+    //         deployer.deploy(GovernanceToken).then(() => {
+    //             return GovernanceToken.deployed().then((governanceTokenInstance) => {
+    //                 console.log('[ Governance Token.address ]: ' + governanceTokenInstance.address);
+    //                 // return deployer.deploy(Staking, tokenInstance.address, governanceTokenInstance.address, STAKING_START_TIME, STAKING_END_TIME, totalReward, governanceTokenRewardRatio).then(() => {
+
+    //                 return deployer.deploy(Staking, tokenInstance.address, governanceTokenInstance.address, blockNumber + 40, blockNumber + 60, totalReward, governanceTokenRewardRatio).then(() => {
+
+    //                     return Staking.deployed().then((stakingInstance) => {
+    //                         console.log('[ StakingInstance.address ]: ' + stakingInstance.address);
+    //                         return deployer.deploy(StakingToken, stakingInstance.address, STAKING_TOKEN_SYMBOL, STAKING_TOKEN_NAME).then(() => {
+
+    //                             return StakingToken.deployed().then((stakingTokenInstance) => {
+    //                                 console.log('[ StakingTokenInstance.address ]: ' + stakingTokenInstance.address);
+    //                                 console.log('Setting up staking token address in Staking contract....');
+    //                                 return stakingInstance.updateStakingTokenAddress(stakingTokenInstance.address).then(() => {
+    //                                     console.log('Setting controller in Governance Token contract....');
+
+    //                                     return governanceTokenInstance.setController(stakingInstance.address).then(() => {
+    //                                         console.log('Setting controller in AUDT Token contract....');
+    //                                         return tokenInstance.setController(stakingInstance.address).then(() => {
+    //                                             console.log("Contracts have been initialized....");
+    //                                         })
+    //                                     })
+    //                                 })
+    //                             })
+    //                         })
+    //                     })
+    //                 })
+    //             })
+    //         })
+    //     })
+    // })
 };

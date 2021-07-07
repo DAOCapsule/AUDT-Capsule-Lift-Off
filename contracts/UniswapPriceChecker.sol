@@ -18,7 +18,7 @@ contract UniswapPriceChecker {
 
   enum tokensList {ST1, ST2, ST3, ST4, Gov, AUDT}
 
-  constructor(address _AUDTToken, address _stakingToken, address _governanceToken, address _DAI ) public {
+  constructor(address _AUDTToken, address _stakingToken, address _governanceToken, address _DAI ) {
     uniswapRouter = IUniswapV2Router02(UNISWAP_ROUTER_ADDRESS);
     AUDTToken = _AUDTToken;
     stakingToken1 = _stakingToken;

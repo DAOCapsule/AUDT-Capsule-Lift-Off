@@ -2,7 +2,6 @@
 pragma solidity =0.8.0;
 
 import "./StakingToken.sol";
-import "./GovernanceToken.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -35,8 +34,6 @@ contract Staking is Ownable {
     uint256 public totalCancelled;                      //track total number of cancelled deposits
     uint256 public stakedAmount;                        //total number of staked tokens    
     IERC20 private _auditToken;                         //AUDT token 
-    GovernanceToken private _governanceToken;           //Governance token 
-    uint256 public governanceTokenRatio;                //Governance token ratio
     uint256 public stakingDateStart;                    //Staking date start
     uint256 public stakingDateEnd;                      //Staking date end
     uint256 public totalReward;                         //Total reward available
@@ -70,34 +67,27 @@ contract Staking is Ownable {
     /**
      * @dev Sets the below variables 
      * @param _auditTokenAddress - address of the AUDT token
-     * @param _governanceTokenAddress - address of the governance token
      * @param _stakingDateStart - date staking starts
      * @param _stakingDateEnd - date staking ends
-     * @param _totalReward - amount of rewards to be sent to contract after staking ended
+     * @param _totalReward - reward for this capsule 
      */
-    constructor(IERC20 _auditTokenAddress, 
-                GovernanceToken _governanceTokenAddress, 
+    constructor(address _auditTokenAddress, 
+                // GovernanceToken _governanceTokenAddress, 
                 uint256 _stakingDateStart, 
                 uint256 _stakingDateEnd, 
-                uint256 _totalReward,
-                uint256 _govTokenRatio) public {
+                uint256 _totalReward
+                )  {
 
         require(_stakingDateEnd != 0, "Staking:constructor - Staking end date can't be 0" );
         require(_stakingDateStart != 0, "Staking:constructor - Staking start date can't be 0" );
-        require(_govTokenRatio != 0, "Staking:constructor - Governance token ratio can't be 0");
-        require(_auditTokenAddress != IERC20(0), "Staking:constructor - Audit token address can't be 0");
-        require(_governanceTokenAddress != GovernanceToken(0), "Staking:constructor - Governance token address can't be 0");
+        require(_auditTokenAddress != address(0), "Staking:constructor - Audit token address can't be 0");
         require(_totalReward < 2**238 -1 , "The reward is too high");  // max uint256 subtracted with 18 digits to accommodate
                                                                        // for multiplications in later code. 
-        require(_govTokenRatio <= 10**17 , "The ratio is too high");   // largest gov token ratio in 4 capsule
 
-        _auditToken = _auditTokenAddress;
+        _auditToken = IERC20(_auditTokenAddress);
         stakingDateStart = _stakingDateStart;
         stakingDateEnd = _stakingDateEnd;
         totalReward =  _totalReward;
-        _governanceToken = _governanceTokenAddress;
-        governanceTokenRatio = _govTokenRatio;
-
     }
 
      /**
@@ -170,19 +160,6 @@ contract Staking is Ownable {
     }
 
     /**
-     * @dev Function to send reward amount to the contract 
-     * @param amount of AUDT tokens       
-     */
-    function fundStaking(uint256 amount) public onlyOwner(){
-
-        require(amount == totalReward, "Staking:fundStaking - The amount of tokens sent doesn't match amount declared:");
-
-        _auditToken.safeTransferFrom(msg.sender, address(this), amount);
-        // totalReward += amount;
-        emit LogDepositReceived(msg.sender, amount);
-    }
-
-    /**
      * @dev Function to set the staking token address 
      * @param stakingTokenAddress address of staking token
      */
@@ -232,16 +209,6 @@ contract Staking is Ownable {
         _stakingToken.mint(msg.sender, amount);
     }
 
-
-    /**
-     * @dev Function to deliver governance tokens called from _deliverRewards function
-     * @param amount number of tokens to be issued
-     */
-    function _deliverGovernanceToken(uint256 amount) internal {
-
-        _governanceToken.mint(msg.sender, amount);
-    }
-  
      /**
      * @dev Function to redeem contribution. Based on the staking period function may send rewards or just deposit. 
      * If user redeems after staking ended, reward will be added to deposit. If staking is still in progress, 
@@ -285,7 +252,6 @@ contract Staking is Ownable {
         released[msg.sender] = released[msg.sender].add(amountRedeemed);
         totalReleased = totalReleased.add(amountRedeemed);
         _auditToken.safeTransfer(msg.sender, amountRedeemed);
-        _deliverGovernanceToken((governanceTokenRatio.mul(amount)).div(1e18));
         LogRewardDelivered(msg.sender, amountRedeemed);
     }
 
