@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./AuditToken.sol";
 
 
 /**
@@ -25,6 +26,8 @@ contract Staking is Ownable {
     using SafeERC20 for IERC20;
 
 
+    uint256  constant LARGEST_POOL = 18000000 * 1e18;
+
     mapping(address => uint256) public deposits;        //track deposits per user
     mapping(address => uint256) public released;        //track redeemed deposits per user
     mapping(address => uint256) public cancelled;       //track cancelled deposits per user
@@ -33,7 +36,7 @@ contract Staking is Ownable {
     uint256 public totalReleased;                       //track total number of redeemed deposits
     uint256 public totalCancelled;                      //track total number of cancelled deposits
     uint256 public stakedAmount;                        //total number of staked tokens    
-    IERC20 private _auditToken;                         //AUDT token 
+    AuditToken private _auditToken;                         //AUDT token 
     uint256 public stakingDateStart;                    //Staking date start
     uint256 public stakingDateEnd;                      //Staking date end
     uint256 public totalReward;                         //Total reward available
@@ -59,7 +62,7 @@ contract Staking is Ownable {
     event LogBlacklisted(address indexed to);
 
     ///@dev Emitted when unauthorized tokens are refunded
-    event LogUnauthorizedTokensReturn(address indexed to, address token, uint256 amount);
+    event LogUnauthorizedTokensReturn(address indexed to, uint256 amount);
 
     ///@dev Emitted when redeem has complete
     event LogTokensRedeemed(address indexed to, uint256 amount);
@@ -72,7 +75,6 @@ contract Staking is Ownable {
      * @param _totalReward - reward for this capsule 
      */
     constructor(address _auditTokenAddress, 
-                // GovernanceToken _governanceTokenAddress, 
                 uint256 _stakingDateStart, 
                 uint256 _stakingDateEnd, 
                 uint256 _totalReward
@@ -81,10 +83,9 @@ contract Staking is Ownable {
         require(_stakingDateEnd != 0, "Staking:constructor - Staking end date can't be 0" );
         require(_stakingDateStart != 0, "Staking:constructor - Staking start date can't be 0" );
         require(_auditTokenAddress != address(0), "Staking:constructor - Audit token address can't be 0");
-        require(_totalReward < 2**238 -1 , "The reward is too high");  // max uint256 subtracted with 18 digits to accommodate
-                                                                       // for multiplications in later code. 
+        require(_totalReward <= LARGEST_POOL , "The reward is too high"); 
 
-        _auditToken = IERC20(_auditTokenAddress);
+        _auditToken = AuditToken(_auditTokenAddress);
         stakingDateStart = _stakingDateStart;
         stakingDateEnd = _stakingDateEnd;
         totalReward =  _totalReward;
@@ -123,18 +124,13 @@ contract Staking is Ownable {
 
     /**
      * @dev Function to manually return tokens which were send directly to the contract
-     * @param token - address of the token
      * @param recipient - address of recipient
      * @param amount - amount refunded   
      */
-    function returnUnauthorizedTokens(address token, address recipient, uint256 amount) public onlyOwner() {
+    function returnUnauthorizedTokens( address recipient, uint256 amount) public onlyOwner() {
        
-        // ensure that only extra tokens can be returned.
-        
-        if (address(token) == address(_auditToken))
-            require(_auditToken.balanceOf(address(this)).sub(amount)  >= totalReward.add(stakedAmount).sub(totalReleased), "Staking:returnUnauthorizedtokens - You are refunding more than available. ");
-        IERC20(token).transfer(recipient, amount);
-        LogUnauthorizedTokensReturn(recipient, token, amount);
+        IERC20(_auditToken).safeTransfer(recipient, amount);
+        LogUnauthorizedTokensReturn(recipient, amount);
     }
 
     /**
@@ -194,7 +190,7 @@ contract Staking is Ownable {
      */
     function _receiveDeposit(uint amount) internal  {      
 
-        _auditToken.safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(_auditToken).safeTransferFrom(msg.sender, address(this), amount);
         deposits[msg.sender] = deposits[msg.sender].add(amount);
         emit LogDepositReceived(msg.sender, amount);
     }
@@ -251,7 +247,7 @@ contract Staking is Ownable {
         amountRedeemed = returnEarningsPerAmount(amount);
         released[msg.sender] = released[msg.sender].add(amountRedeemed);
         totalReleased = totalReleased.add(amountRedeemed);
-        _auditToken.safeTransfer(msg.sender, amountRedeemed);
+        _auditToken.mint(msg.sender, amountRedeemed);
         LogRewardDelivered(msg.sender, amountRedeemed);
     }
 
@@ -264,7 +260,7 @@ contract Staking is Ownable {
         cancelled[msg.sender] = cancelled[msg.sender].add(amount);
         stakedAmount = stakedAmount.sub(amount);
         totalCancelled = totalCancelled.add(amount);
-        _auditToken.safeTransfer(msg.sender, amount);
+        IERC20(_auditToken).safeTransfer(msg.sender, amount);
         LogDepositCancelled(msg.sender, amount);
     }
 }
