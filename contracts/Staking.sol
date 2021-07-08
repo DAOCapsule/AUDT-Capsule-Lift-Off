@@ -142,7 +142,7 @@ contract Staking is Ownable {
         if (stakedAmount == 0)
             return totalReward; // At this stage there is no contributions
          else
-            return (totalReward.mul(1e18) / stakedAmount) + 1e18 ;
+            return (totalReward.mul(1e18) / stakedAmount)  ;
     }
 
      /**
@@ -190,8 +190,8 @@ contract Staking is Ownable {
      */
     function _receiveDeposit(uint amount) internal  {      
 
-        IERC20(_auditToken).safeTransferFrom(msg.sender, address(this), amount);
         deposits[msg.sender] = deposits[msg.sender].add(amount);
+        IERC20(_auditToken).safeTransferFrom(msg.sender, address(this), amount);
         emit LogDepositReceived(msg.sender, amount);
     }
 
@@ -216,14 +216,10 @@ contract Staking is Ownable {
         require(_stakingToken.balanceOf(msg.sender) >= amount, "Staking:redeem - you are claiming more than your balance.");    
         _burnStakedToken(amount);
 
-        if (block.number > stakingDateEnd){
+        if (block.number > stakingDateEnd)
             _deliverRewards(amount);       
-            emit LogTokensRedeemed(msg.sender, returnEarningsPerAmount(amount));            
-        } 
-        else{
+        else
             _returnDeposit(amount);
-            emit LogTokensRedeemed(msg.sender, amount);
-        }
     }
 
      /**
@@ -237,10 +233,10 @@ contract Staking is Ownable {
     }
 
      /**
-     * @dev Function to deliver rewards called from redeem() function
+     * @dev Function to deliver rewards with original deposit called from redeem() function
      * @param amount number of tokens to deliver (token originally deposited + staking rewards)
      */
-    function _deliverRewards(uint256 amount) internal {
+    function _deliverRewards(uint256 amount) internal  {
 
         uint256 amountRedeemed;
         
@@ -248,6 +244,7 @@ contract Staking is Ownable {
         released[msg.sender] = released[msg.sender].add(amountRedeemed);
         totalReleased = totalReleased.add(amountRedeemed);
         _auditToken.mint(msg.sender, amountRedeemed);
+        IERC20(_auditToken).safeTransfer(msg.sender, amount);
         LogRewardDelivered(msg.sender, amountRedeemed);
     }
 
