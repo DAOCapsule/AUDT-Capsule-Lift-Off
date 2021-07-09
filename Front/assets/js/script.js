@@ -5,14 +5,14 @@
 
 
 let buildDir, configDir, account, earningRatio, receipts, stakingTokenSymbol, stakingTokenName,
-    stakedAmount, totalReward, userHoldingsAUDT, conversionStable_AUDT , userHoldingsGovToken,
+    stakedAmount, totalReward, userHoldingsAUDT, conversionStable_AUDT, userHoldingsGovToken,
     startBlock, endBlock, tokenAddress, stakingAddress, stakingReceipt, governanceToken, selectedCapsule = 1,
     govTokenRewardRatio, stakingStartTime, stakingEndTime, blockNumber, deploymentTime, deploymentStatus, chainId = "0x539", web3;
 
-    // chainId = "0x4";
+// chainId = "0x4";
 
 
-const uniswapPriceCheckerAddress =   "0x010DfD042cCe198fDb38F1Fcaf6169594488C446";
+const uniswapPriceCheckerAddress = "0x010DfD042cCe198fDb38F1Fcaf6169594488C446";
 
 
 
@@ -20,20 +20,20 @@ async function init() {
 
     ethEnabled();
 
-
+    buildDir = "../../build/contracts/";
+    configDir = "../../config/"
 
     await getAccount();
 
 
     try {
-    let test = ethereum.isMetaMask;
-    }catch (error) {
+        let test = ethereum.isMetaMask;
+    } catch (error) {
         showTimeNotification("top", "left", error);
     }
     // ethereum.autoRefreshOnNetworkChange = false;
 
-    buildDir = "../../build/contracts/";
-    configDir = "../../config/"
+
     selectedCapsule = 1;
 
     if (typeof window.web3 === 'undefined') {
@@ -58,7 +58,7 @@ async function init() {
     if (ethereum.selectedAddress != undefined) {
         console.log('MetaMask is installed!');
 
-        getAccount(1);
+        //    await getAccount(1);
 
         // var interval = setInterval(function () {
         //     loadPortfolio(selectedCapsule).then(function (res, err) {
@@ -137,13 +137,12 @@ async function loadContract(capsuleNumber) {
     let res = await loadConfig("capsule" + capsuleNumber + ".json");
 
     let actual_JSON = JSON.parse(res);
-    const { AUDT_TOKEN_ADDRESS, STAKING_CONTRACT_ADDRESS, STAKING_RECEIPT, GOVERNANCE_TOKEN_ADDRESS, GOVERNANCE_TOKEN_REWARD_RATIO,
+    const { AUDT_TOKEN_ADDRESS, STAKING_CONTRACT_ADDRESS, STAKING_RECEIPT,
         STAKING_START_TIME, STAKING_END_TIME, DEPLOYMENT_TIME, DEPLOYMENT_STATUS } = actual_JSON;
 
     tokenAddress = AUDT_TOKEN_ADDRESS;
     stakingAddress = STAKING_CONTRACT_ADDRESS;
     stakingReceipt = STAKING_RECEIPT;
-    governanceToken = GOVERNANCE_TOKEN_ADDRESS;
     stakingEndTime = STAKING_END_TIME;
     stakingStartTime = STAKING_START_TIME;
     deploymentTime = DEPLOYMENT_TIME;
@@ -166,36 +165,38 @@ async function populatePoolTable(capsuleNumber) {
     let priceCheckContractHandle = new web3.eth.Contract(actual_JSON["abi"], uniswapPriceCheckerAddress);
 
 
-    let stakingTokenValue = await priceCheckContractHandle.methods.getEstimatedTokenForDAI(Math.pow(10, 18), capsuleNumber - 1).call();
-    let governanceTokenValue = await priceCheckContractHandle.methods.getEstimatedTokenForDAI(Math.pow(10, 18), 4).call();
-    let AUDTTokenValue = await priceCheckContractHandle.methods.getEstimatedTokenForDAI(Math.pow(10, 18), 5).call();
+    // let stakingTokenValue = await priceCheckContractHandle.methods.getEstimatedTokenForDAI(Math.pow(10, 18), capsuleNumber - 1).call();
+    let stakingTokenValue = "1000000000000000000000"
+    // let governanceTokenValue = await priceCheckContractHandle.methods.getEstimatedTokenForDAI(Math.pow(10, 18), 4).call();
+    // let AUDTTokenValue = await priceCheckContractHandle.methods.getEstimatedTokenForDAI(Math.pow(10, 18), 5).call();
+    let AUDTTokenValue = "1000000000000000000000";
 
-    AUDTTokenValue = new Decimal(Number(AUDTTokenValue[0])).dividedBy(Math.pow(10,18)).toNumber();
-    governanceTokenValue = new Decimal(Number(governanceTokenValue[0])).dividedBy(Math.pow(10,18)).toNumber();
-    stakingTokenValue = new Decimal(Number(stakingTokenValue[0])).dividedBy(Math.pow(10,18)).toNumber();
+    AUDTTokenValue = new Decimal(Number(AUDTTokenValue[0])).dividedBy(Math.pow(10, 18)).toNumber();
+    // governanceTokenValue = new Decimal(Number(governanceTokenValue[0])).dividedBy(Math.pow(10,18)).toNumber();
+    stakingTokenValue = new Decimal(Number(stakingTokenValue[0])).dividedBy(Math.pow(10, 18)).toNumber();
 
     $("#tb-mission-reward").html((Number(totalReward)).formatMoney(2, ".", ","));
-    $("#tb-mission-reward-usd").html((totalReward  * AUDTTokenValue).formatMoney(2, ".", ","));
+    $("#tb-mission-reward-usd").html((totalReward * AUDTTokenValue).formatMoney(2, ".", ","));
     $("#tb-total-staked").html((Number(stakedAmount)).formatMoney(2, ".", ","));
-    $("#tb-total-staked-usd").html((stakedAmount  * AUDTTokenValue).formatMoney(2, ".", ","));
+    $("#tb-total-staked-usd").html((stakedAmount * AUDTTokenValue).formatMoney(2, ".", ","));
     $("#tb-my-stake").html((Number(receipts)).formatMoney(2, ".", ","));
     $("#tb-my-stake-usd").html((receipts * AUDTTokenValue).formatMoney(2, ".", ","));
 
-    $("#tb-current-reward").html((receipts *earningRatio).formatMoney(2, ".", ","));
-    $("#tb-current-reward-usd").html((receipts * earningRatio * AUDTTokenValue  ).formatMoney(2, ".", ","));
+    $("#tb-current-reward").html((receipts * earningRatio).formatMoney(2, ".", ","));
+    $("#tb-current-reward-usd").html((receipts * earningRatio * AUDTTokenValue).formatMoney(2, ".", ","));
 
-    $("#tb-ratio").html((Number(earningRatio )).formatMoney(2, ".", ","));
+    $("#tb-ratio").html((Number(earningRatio)).formatMoney(2, ".", ","));
     $("#tb-ratio-usd").html((earningRatio * AUDTTokenValue).formatMoney(2, ".", ","));
     $("#tb-governance-token").html((govTokenRewardRatio * receipts).formatMoney(2, ".", ",") + " DCAP");
-    $("#tb-governance-token-usd").html((govTokenRewardRatio * receipts * governanceTokenValue).formatMoney(2, ".", ",") + " DAI");
-    $("#tb-governance-token-issued").html("(Total DCAP Mined at Expiration&nbsp " + (govTokenRewardRatio * stakedAmount).formatMoney(2, ".", ",") + ")");
+    // $("#tb-governance-token-usd").html((govTokenRewardRatio * receipts * governanceTokenValue).formatMoney(2, ".", ",") + " DAI");
+    // $("#tb-governance-token-issued").html("(Total DCAP Mined at Expiration&nbsp " + (govTokenRewardRatio * stakedAmount).formatMoney(2, ".", ",") + ")");
 
-    $("#return-percentage").html(((Number(earningRatio)  - 1) * 100).formatMoney(2, ".", ",") + "%");
+    $("#return-percentage").html(((Number(earningRatio) - 1) * 100).formatMoney(2, ".", ",") + "%");
     $("#current-block").html("<b>Now Block:</b>" + blockNumber);
     $("#start-block").html("<b>Start Block:</b>" + startBlock);
     $("#end-block").html("<b>End Block:</b>" + endBlock);
 
-    $("#dAudt-version").html("1 " + stakingTokenName +"=");
+    $("#dAudt-version").html("1 " + stakingTokenName + "=");
     $("#audt-dai").html(AUDTTokenValue.formatMoney(2, ".", ","));
 
 }
@@ -218,7 +219,7 @@ async function loadPortfolio(selectedCapsule) {
 
     let earningRatioBig = await stakingContractHandle.methods.returnEarningRatio().call();
 
-    earningRatio = new Decimal(Number(earningRatioBig)).dividedBy(Math.pow(10,18)); 
+    earningRatio = new Decimal(Number(earningRatioBig)).dividedBy(Math.pow(10, 18));
 
     // process staking token 
     res = await loadJSON("StakingToken.json");
@@ -238,12 +239,12 @@ async function loadPortfolio(selectedCapsule) {
     startBlock = await stakingContractHandle.methods.stakingDateStart().call();
     endBlock = await stakingContractHandle.methods.stakingDateEnd().call();
 
-    totalReward = new Decimal(Number(totalRewardBig)).dividedBy(Math.pow(10,18)).toNumber(); 
-    stakedAmount = new Decimal(Number(stakedAmountBig)).dividedBy(Math.pow(10,18)).toNumber(); 
-    let earningsPerAmount = new Decimal(Number(earningsPerAmountBig)).dividedBy(Math.pow(10,18)).toNumber(); 
+    totalReward = new Decimal(Number(totalRewardBig)).dividedBy(Math.pow(10, 18)).toNumber();
+    stakedAmount = new Decimal(Number(stakedAmountBig)).dividedBy(Math.pow(10, 18)).toNumber();
+    let earningsPerAmount = new Decimal(Number(earningsPerAmountBig)).dividedBy(Math.pow(10, 18)).toNumber();
 
     // convert safely to decimal value
-    receipts = new Decimal(Number(receiptsBig)).dividedBy(Math.pow(10,18)).toNumber(); 
+    receipts = new Decimal(Number(receiptsBig)).dividedBy(Math.pow(10, 18)).toNumber();
 
 
     // process AUDT token
@@ -258,7 +259,7 @@ async function loadPortfolio(selectedCapsule) {
 
     let userHoldingsAUDTBig = await AUDTContractHandle.methods.balanceOf(account).call();
 
-    userHoldingsAUDT = new Decimal(Number(userHoldingsAUDTBig)).dividedBy(Math.pow(10,18)); 
+    userHoldingsAUDT = new Decimal(Number(userHoldingsAUDTBig)).dividedBy(Math.pow(10, 18));
 
 
     // process Governance Token
@@ -300,12 +301,12 @@ async function loadPortfolio(selectedCapsule) {
         $("#take-apr").html("1.00");
         $("#staking-amount").attr("disabled", true);
     } else {
-        $("#portfolio-value-to-take").html(formatNumber(earningsPerAmount) + " AUDT");      
-        if (receipts > 0 )  {
+        $("#portfolio-value-to-take").html(formatNumber(earningsPerAmount) + " AUDT");
+        if (receipts > 0) {
             $("#dcap-to-take").html(formatNumber(govTokenRewardRatio * receipts) + " DCAP");
             $("#taking-amount").val(receipts);
             $("#take").css("display", "block");
-        }else {
+        } else {
             $("#dcap-to-take").html("0 DCAP");
         }
         // $("#taking-amount").val(y.toString());
@@ -321,7 +322,7 @@ async function loadPortfolio(selectedCapsule) {
     $("#status").css("display", "block");
     $(".content").css("display", "block");
 
-    populatePoolTable(selectedCapsule);
+    await populatePoolTable(selectedCapsule);
 }
 
 
@@ -440,156 +441,106 @@ function showTimeNotification(from, align, text) {
 }
 
 
-function preauthorizeAUDT(amount) {
+function preauthorizeAUDT() {
 
     return new Promise(async function (resolve, reject) {
-        let valueToStake, spendAddress, airdropAddress;
-        let blockNum = await promisify(cb => web3.eth.getBlockNumber(cb));
-        let res = await loadJSON("Token.json");
+        // let amountToSpend = new BigNumber($("#dai-contribution").val() * Math.pow(10, 18));
+
+        let id = progressAction("Preauthorizing", 1, "", false, true);
+        let res = await loadJSON("AuditToken.json");
+
         let actual_JSON = JSON.parse(res);
-        let contract = web3.eth.contract(actual_JSON["abi"]);
-        let contractHandle = contract.at(tokenAddress);
-        valueToStake = new Decimal(Number($("#staking-amount").val())).mul(Math.pow(10, 18));
+        let AUDTContractHandle = new web3.eth.Contract(actual_JSON["abi"], tokenAddress);
+        const valueToStake = new Decimal(Number($("#staking-amount").val())).mul(Math.pow(10, 18)).toString();
 
-        let id = progressAction("Pre authorizing AUDT tokens", 1, "", false, true);
 
-        contractHandle.approve(stakingAddress, valueToStake, {
-            from: account
-        }, function (error, result) {
-            if (!error) {
-                console.log(result)
 
-                let log = contractHandle.Approval({
-                    owner: account,
-                    spender: stakingAddress
-                }, {
-                    from: account,
-                    fromBlock: blockNum,
-                    toBlock: 'latest'
-                });
-                log.watch(async function (error, res) {
-
-                    if (!error) {
-                        progressAction("You have successfully authorized transfer of AUDT tokens", 2, id, false, false);
-                        await promisify(cb => log.stopWatching(cb));
-                    }
-                    resolve(res);
-                    log.stopWatching(function (error, res) { });
-                });
-            } else {
-                console.error(error);
+        AUDTContractHandle.methods
+            .approve(stakingAddress, valueToStake)
+            .send({ from: account })
+            .on("receipt", function (receipt) {
+                progressAction("You have successfully authorized: " + Number(valueToStake) / Math.pow(10, 18) + " AUDT.", 2, id, false, false);
+                resolve(receipt);
+            })
+            .on("error", function (error) {
+                progressAction(error.message, 2, id, false, false);
                 reject(error);
-            }
-        });
-    })
+            });
+    });
 }
 
 function depositAUDT() {
 
     return new Promise(async function (resolve, reject) {
 
-        let blockNum = await promisify(cb => web3.eth.getBlockNumber(cb));
         let res = await loadJSON("Staking.json");
         let actual_JSON = JSON.parse(res);
-        let contract = web3.eth.contract(actual_JSON["abi"]);
-        let contractHandle = contract.at(stakingAddress);
-        var valueToStake = new Decimal( $("#staking-amount").val()).mul( Math.pow(10, 18)).toNumber();
-        var logValues;
+        // let contract = web3.eth.contract(actual_JSON["abi"]);
+        let statkingContractHandle = new web3.eth.Contract(actual_JSON["abi"], stakingAddress);
+
+        const valueToStake = new Decimal(Number($("#staking-amount").val())).mul(Math.pow(10, 18)).toString();
+
         var id = progressAction("Staking AUDT", 1, "", false, false);
 
-        contractHandle.stake(valueToStake, {
-            from: account
-        }, function (error, result) {
-            if (!error) {
-                console.log(result)
-                var log = contractHandle.LogStakingTokensIssued({
-                    to: account,
-                    amount: valueToStake
-                }, {
-                    from: account,
-                    fromBlock: blockNum,
-                    toBlock: 'latest'
-                });
-                log.watch(function (error, res) {
-                    if (!error) {
-                        logValues = res;
 
-                        log.stopWatching(function (error, res) {
+        statkingContractHandle.methods
+            .stake(valueToStake)
+            .send({ from: account })
+            .on("receipt", function (receipt) {
+                const event = receipt.events.LogStakingTokensIssued.returnValues;
+                let stakedReceipt = new Decimal(event.amount / Math.pow(10, 18));
 
-                            if (res) {
-                                progressAction("You have successfully deposited AUDT tokens and  have received " + ( Number(new Decimal(logValues.args.amount.toString()).dividedBy( Math.pow(10, 18)))).formatMoney(2, ".", ",") + " Staking Tokens.", 2, id, true);
-                                resolve(res);
-                                log.stopWatching(function (error, res) { });
-                            }
-                        });
+                progressAction("You have successfully deposited AUDT tokens and  have received " + stakedReceipt.toString() + " Staking Tokens.", 2, id, true);
 
-                    } else {
-                        console.error(error);
-                        reject(error);
-                    }
-                });
-            } else {
-                console.error(error);
+                resolve(receipt);
+            })
+            .on("error", function (error) {
+                progressAction(error.message, 2, id, false, false);
                 reject(error);
-            }
-        });
-    })
+            });
+    });
+
+
 }
 
-
-function redeem() {
+async function redeem() {
 
     return new Promise(async function (resolve, reject) {
 
-
-        let blockNum = await promisify(cb => web3.eth.getBlockNumber(cb));
         let res = await loadJSON("Staking.json");
         let actual_JSON = JSON.parse(res);
-        let contract = web3.eth.contract(actual_JSON["abi"]);
-        let contractHandle = contract.at(stakingAddress);
-        let valueToRedeem = new Decimal($("#taking-amount").val()).mul( Math.pow(10, 18)).toNumber();
-        let logValues;
+
+        let statkingContractHandle = new web3.eth.Contract(actual_JSON["abi"], stakingAddress);
+
+        let valueToRedeem = new Decimal($("#taking-amount").val()).mul(Math.pow(10, 18)).toString();
         let id = progressAction("Redeeming " + $("#taking-amount").val() + " " + stakingTokenSymbol, 1, "", false, true);
 
-        contractHandle.redeem(valueToRedeem, {
-            from: account
-        }, function (error, result) {
-            if (!error) {
-                console.log(result)
-                var log = contractHandle.LogTokensRedeemed({
-                    to: account,
-                    amount: valueToRedeem
-                }, {
-                    from: account,
-                    fromBlock: blockNum,
-                    toBlock: 'latest'
-                });
-                log.watch(function (error, res) {
-                    if (!error) {
-                        logValues = res;
+        statkingContractHandle.methods
+            .redeem(valueToRedeem)
+            .send({ from: account })
+            .on("receipt", function (receipt) {
 
-                        log.stopWatching(function (error, res) {
+                let amount;
 
-                            if (res) {
-                                progressAction("You have successfully returned " + $("#taking-amount").val() + " " + stakingTokenSymbol + " and have received " + ( Number(new Decimal(logValues.args.amount.toString()).dividedBy( Math.pow(10, 18)))).formatMoney(2, ".", ",")  + " AUDT.", 2, id, true);
-                                resolve(res);
-                            }
-                        });
+                if (receipt.events.LogDepositCancelled != undefined) {
+                    amount = receipt.events.LogDepositCancelled.returnValues.amount;
+                } else if (receipt.events.LogRewardDelivered != undefined) {
+                    amount = receipt.events.LogRewardDelivered.returnValues.amount;
+                }
 
-                    } else {
-                        console.error(error);
-                        reject(error);
-                    }
-                });
-            } else {
-                console.error(error);
+                progressAction("You have successfully returned " + $("#taking-amount").val() + " " + stakingTokenSymbol + " and have received " + (Number(new Decimal(amount.toString()).dividedBy(Math.pow(10, 18)))).formatMoney(2, ".", ",") + " AUDT.", 2, id, true);
+
+                resolve(receipt);
+            })
+            .on("error", function (error) {
+                progressAction(error.message, 2, id, false, false);
                 reject(error);
-            }
-        });
-    })
+            });
+    });
+
+
+
 }
-
-
 
 function loadJSON(fileName, callback) {
 
@@ -749,7 +700,7 @@ $(document).ready(function () {
         $('#stake-apr').text((earningRatioTemp).formatMoney(2, ".", ","));
         $('#earned-amount').text(((Number(this.value) * earningRatioTemp)).formatMoney(2, ".", ",") + " AUDT");
 
-        if (Number(this.value) > userHoldingsAUDT ) {
+        if (Number(this.value) > userHoldingsAUDT) {
             $("#msg-error-stake").css("background-color", "lightyellow");
             $("#msg-error-stake").html("Insufficient Balance.");
             $("#contribute").css("display", "none");
@@ -781,8 +732,8 @@ $(document).ready(function () {
                 else
                     $('#take-amount').text((Number(this.value)).formatMoney(2, ".", ",") + " AUDT");
             }
-            else 
-            $("#take").css("display", "none");
+            else
+                $("#take").css("display", "none");
         }
     });
 

@@ -11,6 +11,8 @@ var BigNumber = require('big-number');
 module.exports = async function (deployer, network, accounts) { // eslint-disable-line
 
     const owner = accounts[0];
+    let tokensToDeposit = "1000000000000000000000";
+
 
     let blockNumber = await web3.eth.getBlockNumber();
 
@@ -19,8 +21,8 @@ module.exports = async function (deployer, network, accounts) { // eslint-disabl
 
     // deploy the token with params from /config/contract.json file
 
-    const { STAKING_START_TIME, STAKING_END_TIME, TOTAL_REWARD, STAKING_TOKEN_SYMBOL, STAKING_TOKEN_NAME, GOVERNANCE_TOKEN_REWARD_RATIO } = cnf;
-    let governanceTokenRewardRatio = new BigNumber(GOVERNANCE_TOKEN_REWARD_RATIO);
+    const { STAKING_START_TIME, STAKING_END_TIME, TOTAL_REWARD, STAKING_TOKEN_SYMBOL, STAKING_TOKEN_NAME } = cnf;
+    // let governanceTokenRewardRatio = new BigNumber(GOVERNANCE_TOKEN_REWARD_RATIO);
     let totalReward = new BigNumber(TOTAL_REWARD);
 
    
@@ -42,6 +44,14 @@ module.exports = async function (deployer, network, accounts) { // eslint-disabl
 
 
     await token.grantRole(MINTER_ROLE, staking.address, { from: owner });
+
+    await token.grantRole(MINTER_ROLE, owner, { from: owner });
+    await token.mint(owner, tokensToDeposit, { from: owner });
+
+    console.log("\n\n" + '"AUDT_TOKEN_ADDRESS":"' + token.address + '",');
+    console.log('"STAKING_CONTRACT_ADDRESS":"' + staking.address + '",');
+    console.log('"STAKING_RECEIPT":"' + stakingToken.address + '"' + "\n\n");
+
 
 
     // deployer.deploy(Token).then(() => {
